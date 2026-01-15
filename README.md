@@ -2,22 +2,36 @@
 
 GitHub organization metrics dashboard by [Darkroom Engineering](https://darkroom.engineering).
 
-## Apps
+## Quick Start
+
+### CLI (via npm)
+
+```bash
+npx specto-cli darkroomengineering
+```
+
+### Desktop App
+
+Download from [Releases](https://github.com/darkroomengineering/specto/releases) or visit [specto.darkroom.engineering](https://specto.darkroom.engineering).
+
+## Monorepo Structure
+
+### Apps
 
 | App | Description | Stack |
 |-----|-------------|-------|
 | `apps/desktop` | Native desktop app | Tauri 2, React 19, Vite 7 |
 | `apps/web` | Marketing website | Next.js 16, React 19 |
-| `apps/cli` | Command-line tool | Bun, Commander |
+| `apps/cli` | CLI tool (`specto-cli` on npm) | Bun, Commander |
 
-## Packages
+### Packages
 
 | Package | Description |
 |---------|-------------|
 | `@specto/core` | Shared types and GitHub client |
 | `@specto/ui` | Darkroom-themed React components |
 
-## Getting Started
+## Development
 
 ```bash
 # Install dependencies
@@ -30,9 +44,9 @@ bun dev
 bun build
 ```
 
-## Desktop App
+### Desktop App Development
 
-The desktop app requires [GitHub CLI](https://cli.github.com) for authentication:
+Requires [GitHub CLI](https://cli.github.com) for authentication:
 
 ```bash
 # Install GitHub CLI
