@@ -37,6 +37,7 @@ export function Wrapper({ children, showHeader = true, showFooter = true }: Wrap
 			if (!href?.startsWith('#') && !href?.includes('/#')) return
 
 			const hash = href.includes('/#') ? href.split('/#')[1] : href.slice(1)
+			if (!hash) return
 			const element = document.getElementById(hash)
 			if (!element) return
 
