@@ -14,9 +14,10 @@ interface LicenseState {
 	clearLicense: () => void
 }
 
-// Polar organization ID - get this from your Polar dashboard
-// This is public and identifies your org for license validation
-const POLAR_ORG_ID = 'darkroomengineering'
+// Server-side validation endpoint (cannot be bypassed)
+const API_BASE = import.meta.env.PROD
+	? 'https://specto.darkroom.engineering'
+	: 'http://localhost:3000'
 
 // Dev mode bypass requires a special env var (not just running in dev)
 // This prevents cloning the repo and getting Pro features for free
@@ -60,45 +61,29 @@ export const useLicenseStore = create<LicenseState>()(
 				set({ isValidating: true, error: null })
 
 				try {
-					// Validate against Polar API
-					const response = await fetch(
-						'https://api.polar.sh/v1/customer-portal/license-keys/validate',
-						{
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({
-								key: licenseKey,
-								organization_id: POLAR_ORG_ID,
-							}),
-						}
-					)
-
-					if (!response.ok) {
-						const errorData = await response.json().catch(() => ({}))
-						throw new Error(errorData.detail || 'Invalid license key')
-					}
+					// Validate via server-side API (cannot be bypassed by patching client)
+					const response = await fetch(`${API_BASE}/api/license/validate`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ licenseKey }),
+					})
 
 					const data = await response.json()
 
-					// Check if license is valid and not expired
-					const isValid = data.valid === true
-					const expiresAt = data.expires_at ? new Date(data.expires_at) : null
-					const isExpired = expiresAt ? expiresAt < new Date() : false
-
-					if (isValid && !isExpired) {
+					if (data.valid && data.isPro) {
 						set({
 							isPro: true,
-							activatedAt: data.activated_at || new Date().toISOString(),
-							expiresAt: data.expires_at || null,
+							activatedAt: new Date().toISOString(),
+							expiresAt: data.expiresAt || null,
 							error: null,
 						})
 						return true
 					} else {
 						set({
 							isPro: false,
-							error: isExpired ? 'License has expired' : 'Invalid license key',
+							error: data.error || 'Invalid license key',
 						})
 						return false
 					}
@@ -162,5 +147,56 @@ export function useProFeature() {
 		canAddOrg: (currentCount: number) => currentCount < limits.maxOrganizations,
 		canAccessHistory: (days: number) => days <= limits.historyDays,
 		canExport: limits.canExport,
+	}
+}
+
+// Server-side export (requires valid license, cannot be bypassed)
+export async function exportData(
+	format: 'csv' | 'json',
+	data: {
+		organization: string
+		metrics: {
+			commits: number
+			pullRequests: number
+			issues: number
+			contributors: number
+			repositories: number
+			stars: number
+		}
+		period: string
+	}
+): Promise<{ success: boolean; error?: string; blob?: Blob; filename?: string }> {
+	const { licenseKey } = useLicenseStore.getState()
+
+	if (!licenseKey) {
+		return { success: false, error: 'Pro license required for export' }
+	}
+
+	try {
+		const response = await fetch(`${API_BASE}/api/export`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				licenseKey,
+				format,
+				data: {
+					...data,
+					generatedAt: new Date().toISOString(),
+				},
+			}),
+		})
+
+		if (!response.ok) {
+			const err = await response.json().catch(() => ({}))
+			return { success: false, error: err.error || 'Export failed' }
+		}
+
+		const blob = await response.blob()
+		const filename = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1]
+			|| `specto-export.${format}`
+
+		return { success: true, blob, filename }
+	} catch (err) {
+		return { success: false, error: 'Export service unavailable' }
 	}
 }
