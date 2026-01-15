@@ -16,7 +16,7 @@ interface LicenseState {
 
 // Polar organization ID - get this from your Polar dashboard
 // This is public and identifies your org for license validation
-const POLAR_ORG_ID = 'darkroom-engineering' // Replace with your actual Polar org slug
+const POLAR_ORG_ID = 'darkroomengineering'
 
 // In development, always unlock Pro features
 const IS_DEV = !import.meta.env.PROD
