@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const POLAR_ORG_ID = 'darkroomengineering'
-const API_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://specto.darkroom.engineering'
+
+// Master license key (set in environment, never expires)
+const MASTER_LICENSE_KEY = process.env.MASTER_LICENSE_KEY
 
 interface ExportRequest {
 	licenseKey: string
@@ -23,6 +25,11 @@ interface ExportRequest {
 
 // Validate license server-side
 async function validateLicense(licenseKey: string): Promise<boolean> {
+	// Check master license key first
+	if (MASTER_LICENSE_KEY && licenseKey === MASTER_LICENSE_KEY) {
+		return true
+	}
+
 	try {
 		const response = await fetch(
 			'https://api.polar.sh/v1/customer-portal/license-keys/validate',
