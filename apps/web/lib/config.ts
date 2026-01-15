@@ -12,9 +12,10 @@ export function getDownloadUrl(filename: string, version = APP_VERSION) {
 }
 
 // Available downloads - set file to null for coming soon
+// Update these when you create GitHub releases
 export const downloads = {
 	macos: {
-		arm64: `Specto_${APP_VERSION}_aarch64.dmg`,
+		arm64: null as string | null, // `Specto_${APP_VERSION}_aarch64.dmg` when released
 		x64: null as string | null, // Intel - coming soon
 	},
 	windows: {
