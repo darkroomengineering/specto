@@ -1,7 +1,6 @@
 'use client'
 
 import { Button, Card } from '@specto/ui'
-import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 interface OrgStats {
@@ -47,25 +46,6 @@ export default function LeaderboardPage() {
 
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
-			{/* Header */}
-			<header className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
-				<div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-					<Link href="/" className="text-xl font-semibold text-[var(--accent)]">specto</Link>
-					<nav className="flex items-center gap-6">
-						<Link href="/#features" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							Features
-						</Link>
-						<Link href="/leaderboard" className="text-sm text-[var(--foreground)] font-medium">
-							Leaderboard
-						</Link>
-						<Link href="https://github.com/darkroomengineering/specto" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							GitHub
-						</Link>
-						<Button size="sm">Download</Button>
-					</nav>
-				</div>
-			</header>
-
 			{/* Hero */}
 			<section className="pt-32 pb-12 px-6 text-center">
 				<h1 className="text-5xl font-bold mb-4">Global Leaderboard</h1>
@@ -237,18 +217,6 @@ export default function LeaderboardPage() {
 				</div>
 			</section>
 
-			{/* Footer */}
-			<footer className="border-t border-[var(--border)]">
-				<div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
-					<span className="text-sm text-[var(--muted)]">
-						© 2025 <span className="text-[var(--accent)]">Darkroom Engineering</span>
-					</span>
-					<div className="flex items-center gap-6 text-sm text-[var(--muted)]">
-						<Link href="/" className="hover:text-[var(--foreground)]">Home</Link>
-						<Link href="https://github.com/darkroomengineering/specto" className="hover:text-[var(--foreground)]">GitHub</Link>
-					</div>
-				</div>
-			</footer>
 		</div>
 	)
 }
