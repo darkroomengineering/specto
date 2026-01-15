@@ -346,7 +346,7 @@ export default function Home() {
 									<li>✓ API access</li>
 									<li>✓ Team comparisons</li>
 								</ul>
-								<Link href="/api/checkout?products=pro_monthly">
+								<Link href="/api/checkout?products=b4ffc79f-8224-40fe-898e-af3e972c7d53">
 									<Button className="w-full">Upgrade to Pro</Button>
 								</Link>
 							</Card.Content>
