@@ -9,10 +9,12 @@
   "scripts": {
     "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node --minify",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "prepublishOnly": "bun run typecheck && bun run build"
+    "prepublishOnly": "bun run test && bun run typecheck && bun run build"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
