@@ -18,8 +18,9 @@ interface LicenseState {
 // This is public and identifies your org for license validation
 const POLAR_ORG_ID = 'darkroomengineering'
 
-// In development, always unlock Pro features
-const IS_DEV = !import.meta.env.PROD
+// Dev mode bypass requires a special env var (not just running in dev)
+// This prevents cloning the repo and getting Pro features for free
+const IS_DEV = !import.meta.env.PROD && import.meta.env.VITE_DEV_UNLOCK === 'true'
 
 export const useLicenseStore = create<LicenseState>()(
 	persist(
