@@ -4,7 +4,7 @@
   "description": "GitHub organization metrics and settings CLI - commit stats, members, teams, webhooks, actions",
   "type": "module",
   "bin": {
-    "pondus": "./dist/index.js"
+    "pondus": "dist/index.js"
   },
   "scripts": {
     "dev": "bun run src/index.ts",
