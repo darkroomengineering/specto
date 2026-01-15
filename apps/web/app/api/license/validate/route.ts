@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const POLAR_ORG_ID = 'darkroomengineering'
 
+// Master license key (set in environment, never expires)
+const MASTER_LICENSE_KEY = process.env.MASTER_LICENSE_KEY
+
 interface ValidateRequest {
 	licenseKey: string
 }
@@ -23,6 +26,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 				{ valid: false, isPro: false, expiresAt: null, error: 'License key required' },
 				{ status: 400 }
 			)
+		}
+
+		// Check master license key (for team use, never expires)
+		if (MASTER_LICENSE_KEY && licenseKey === MASTER_LICENSE_KEY) {
+			return NextResponse.json({
+				valid: true,
+				isPro: true,
+				expiresAt: null, // Never expires
+			})
 		}
 
 		// Validate against Polar API (server-side, can't be bypassed)
