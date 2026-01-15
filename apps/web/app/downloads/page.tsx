@@ -1,11 +1,9 @@
 import { Button, Card } from '@specto/ui'
 import Link from 'next/link'
+import { APP_VERSION, RELEASE_DATE, getDownloadUrl, downloads as downloadConfig } from '@/lib/config'
 
-// Version info
-const currentVersion = '1.1.0'
-const releaseDate = 'January 2025'
-
-const downloads = [
+// Platform download options
+const platformDownloads = [
 	{
 		platform: 'macOS',
 		icon: (
@@ -14,50 +12,28 @@ const downloads = [
 			</svg>
 		),
 		variants: [
-			{ name: 'Apple Silicon', file: `Specto_${currentVersion}_aarch64.dmg`, arch: 'arm64', available: true },
-			{ name: 'Intel', file: `Specto_${currentVersion}_x64.dmg`, arch: 'x64', available: false },
+			{ name: 'Apple Silicon', file: downloadConfig.macos.arm64, arch: 'arm64' },
+			{ name: 'Intel', file: downloadConfig.macos.x64, arch: 'x64' },
 		],
 	},
 	{
 		platform: 'Windows',
 		icon: (
 			<svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-				<path d="M3 5.557l7.357-1.002v7.082H3V5.557zm0 12.886l7.357 1.002v-7.082H3v6.08zm8.146 1.122L21 21v-8.637h-9.854v7.202zm0-14.13v7.202H21V3l-9.854 1.435z" />
+				<path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
 			</svg>
 		),
 		variants: [
-			{ name: 'Installer (exe)', file: `Specto_${currentVersion}_x64-setup.exe`, arch: 'x64', available: false },
-			{ name: 'MSI', file: `Specto_${currentVersion}_x64.msi`, arch: 'x64', available: false },
+			{ name: 'Installer (exe)', file: downloadConfig.windows.exe, arch: 'x64' },
+			{ name: 'MSI', file: downloadConfig.windows.msi, arch: 'x64' },
 		],
 	},
 ]
 
 export default function DownloadsPage() {
-	// All downloads from GitHub releases
-	const getDownloadUrl = (file: string) => {
-		return `https://github.com/darkroomengineering/specto/releases/download/v${currentVersion}/${file}`
-	}
 
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
-			{/* Header */}
-			<header className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
-				<div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-					<Link href="/" className="text-xl font-semibold text-[var(--accent)]">specto</Link>
-					<nav className="flex items-center gap-6">
-						<Link href="/#features" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							Features
-						</Link>
-						<Link href="/leaderboard" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							Leaderboard
-						</Link>
-						<Link href="/downloads" className="text-sm text-[var(--foreground)] font-medium">
-							Downloads
-						</Link>
-					</nav>
-				</div>
-			</header>
-
 			{/* Hero */}
 			<section className="pt-32 pb-12 px-6 text-center">
 				<h1 className="text-5xl font-bold mb-4">Download Specto</h1>
@@ -66,14 +42,14 @@ export default function DownloadsPage() {
 				</p>
 				<div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--card)] text-sm">
 					<span className="w-2 h-2 rounded-full bg-green-500" />
-					Version {currentVersion} • Released {releaseDate}
+					Version {APP_VERSION} • Released {RELEASE_DATE}
 				</div>
 			</section>
 
 			{/* Downloads */}
 			<section className="px-6 pb-16">
 				<div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
-					{downloads.map((platform) => (
+					{platformDownloads.map((platform) => (
 						<Card key={platform.platform}>
 							<Card.Content className="py-8">
 								<div className="flex items-center gap-4 mb-6">
@@ -82,41 +58,54 @@ export default function DownloadsPage() {
 									</div>
 									<div>
 										<h2 className="text-xl font-semibold">{platform.platform}</h2>
-										<p className="text-sm text-[var(--muted)]">v{currentVersion}</p>
+										<p className="text-sm text-[var(--muted)]">v{APP_VERSION}</p>
 									</div>
 								</div>
 
 								<div className="space-y-3">
-									{platform.variants.map((variant) => (
-										<a
-											key={variant.file}
-											href={getDownloadUrl(variant.file)}
-											className={`flex items-center justify-between p-3 rounded-lg border bg-[var(--background)] transition-colors group ${
-												variant.available
-													? 'border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card)]'
-													: 'border-dashed border-[var(--border)] opacity-60'
-											}`}
-										>
-											<div>
-												<p className="font-medium flex items-center gap-2">
-													{variant.name}
-													{!variant.available && (
-														<span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--card)] text-[var(--muted)]">Coming soon</span>
+									{platform.variants.map((variant, idx) => {
+										const isAvailable = variant.file !== null
+										const content = (
+											<>
+												<div>
+													<p className="font-medium flex items-center gap-2">
+														{variant.name}
+														{!isAvailable && (
+															<span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--card)] text-[var(--muted)]">Coming soon</span>
+														)}
+													</p>
+													{isAvailable && variant.file && (
+														<p className="text-xs text-[var(--muted)]">{variant.file}</p>
 													)}
-												</p>
-												<p className="text-xs text-[var(--muted)]">{variant.file}</p>
+												</div>
+												{isAvailable ? (
+													<svg className="w-5 h-5 text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+													</svg>
+												) : (
+													<svg className="w-5 h-5 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+													</svg>
+												)}
+											</>
+										)
+
+										const className = `flex items-center justify-between p-3 rounded-lg border bg-[var(--background)] transition-colors group ${
+											isAvailable
+												? 'border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card)] cursor-pointer'
+												: 'border-dashed border-[var(--border)] opacity-60 cursor-not-allowed'
+										}`
+
+										return isAvailable && variant.file ? (
+											<a key={variant.file} href={getDownloadUrl(variant.file)} className={className}>
+												{content}
+											</a>
+										) : (
+											<div key={`${variant.name}-${idx}`} className={className}>
+												{content}
 											</div>
-											{variant.available ? (
-												<svg className="w-5 h-5 text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-												</svg>
-											) : (
-												<svg className="w-5 h-5 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-												</svg>
-											)}
-										</a>
-									))}
+										)
+									})}
 								</div>
 							</Card.Content>
 						</Card>
@@ -207,18 +196,6 @@ export default function DownloadsPage() {
 				</div>
 			</section>
 
-			{/* Footer */}
-			<footer className="border-t border-[var(--border)]">
-				<div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
-					<span className="text-sm text-[var(--muted)]">
-						© 2025 <span className="text-[var(--accent)]">Darkroom Engineering</span>
-					</span>
-					<div className="flex items-center gap-6 text-sm text-[var(--muted)]">
-						<Link href="/" className="hover:text-[var(--foreground)]">Home</Link>
-						<Link href="https://github.com/darkroomengineering/specto" className="hover:text-[var(--foreground)]">GitHub</Link>
-					</div>
-				</div>
-			</footer>
 		</div>
 	)
 }
