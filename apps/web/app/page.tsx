@@ -3,35 +3,16 @@ import Link from 'next/link'
 
 // Mock leaderboard data - in production this would come from an API
 const topOrgs = [
-	{ rank: 1, name: 'vercel', commits: 12847, prs: 3421, contributors: 89 },
-	{ rank: 2, name: 'facebook', commits: 11203, prs: 2987, contributors: 156 },
-	{ rank: 3, name: 'microsoft', commits: 10892, prs: 2654, contributors: 203 },
-	{ rank: 4, name: 'google', commits: 9876, prs: 2341, contributors: 178 },
-	{ rank: 5, name: 'apple', commits: 8234, prs: 1987, contributors: 92 },
+	{ rank: 1, name: 'vercel', avatarUrl: 'https://avatars.githubusercontent.com/u/14985020', commits: 12847, prs: 3421, contributors: 89 },
+	{ rank: 2, name: 'facebook', avatarUrl: 'https://avatars.githubusercontent.com/u/69631', commits: 11203, prs: 2987, contributors: 156 },
+	{ rank: 3, name: 'microsoft', avatarUrl: 'https://avatars.githubusercontent.com/u/6154722', commits: 10892, prs: 2654, contributors: 203 },
+	{ rank: 4, name: 'google', avatarUrl: 'https://avatars.githubusercontent.com/u/1342004', commits: 9876, prs: 2341, contributors: 178 },
+	{ rank: 5, name: 'apple', avatarUrl: 'https://avatars.githubusercontent.com/u/10639145', commits: 8234, prs: 1987, contributors: 92 },
 ]
 
 export default function Home() {
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
-			{/* Header */}
-			<header className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
-				<div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-					<Link href="/" className="text-xl font-semibold text-[var(--accent)]">specto</Link>
-					<nav className="flex items-center gap-6">
-						<Link href="#features" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							Features
-						</Link>
-						<Link href="#leaderboard" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							Leaderboard
-						</Link>
-						<Link href="https://github.com/darkroomengineering/specto" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-							GitHub
-						</Link>
-						<Button size="sm">Download</Button>
-					</nav>
-				</div>
-			</header>
-
 			{/* Hero section */}
 			<section className="pt-32 pb-16 px-6">
 				<div className="max-w-6xl mx-auto">
@@ -88,7 +69,6 @@ export default function Home() {
 							<div className="flex h-[420px]">
 								{/* Sidebar */}
 								<div className="w-48 border-r border-[var(--border)] bg-[var(--card)] flex flex-col rounded-tr-xl">
-									{/* Nav */}
 									<nav className="p-2 pt-3">
 										<div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[var(--accent)] text-white text-sm">
 											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +77,6 @@ export default function Home() {
 											<span>Dashboard</span>
 										</div>
 									</nav>
-									{/* Recents */}
 									<div className="px-2 mt-1 flex-1">
 										<p className="px-3 py-1.5 text-[10px] font-medium text-[var(--muted)] uppercase tracking-wider">Recents</p>
 										<div className="space-y-0.5">
@@ -111,7 +90,6 @@ export default function Home() {
 											))}
 										</div>
 									</div>
-									{/* Settings */}
 									<div className="p-2 border-t border-[var(--border)]">
 										<div className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)]">
 											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +99,6 @@ export default function Home() {
 											<span>Settings</span>
 										</div>
 									</div>
-									{/* User */}
 									<div className="p-3 border-t border-[var(--border)]">
 										<div className="flex items-center gap-2">
 											<div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-medium">
@@ -226,7 +203,9 @@ export default function Home() {
 								<p className="text-sm text-[var(--muted)] mb-4">
 									Native macOS and Windows app with a beautiful UI. Track multiple orgs, view history, export reports.
 								</p>
-								<Button size="sm">Download Now</Button>
+								<Link href="/downloads">
+									<Button size="sm">Download Now</Button>
+								</Link>
 							</Card.Content>
 						</Card>
 						<Card hover>
@@ -257,7 +236,6 @@ export default function Home() {
 
 					<div className="max-w-3xl mx-auto">
 						<div className="rounded-xl border border-[var(--border)] bg-[var(--background)] overflow-hidden">
-							{/* Table header */}
 							<div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-[var(--border)] bg-[var(--card)] text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
 								<div className="col-span-1">Rank</div>
 								<div className="col-span-5">Organization</div>
@@ -265,8 +243,7 @@ export default function Home() {
 								<div className="col-span-2 text-right">PRs</div>
 								<div className="col-span-2 text-right">Contributors</div>
 							</div>
-							{/* Table rows */}
-							{topOrgs.map((org, index) => (
+							{topOrgs.map((org) => (
 								<div
 									key={org.name}
 									className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-[var(--border)] last:border-0 hover:bg-[var(--card)] transition-colors"
@@ -285,9 +262,11 @@ export default function Home() {
 										)}
 									</div>
 									<div className="col-span-5 flex items-center gap-3">
-										<div className="w-8 h-8 rounded-lg bg-[var(--card)] border border-[var(--border)] flex items-center justify-center text-sm font-medium">
-											{org.name.charAt(0).toUpperCase()}
-										</div>
+										<img
+											src={`${org.avatarUrl}?s=64`}
+											alt={org.name}
+											className="w-8 h-8 rounded-lg bg-[var(--card)] border border-[var(--border)]"
+										/>
 										<span className="font-medium">{org.name}</span>
 									</div>
 									<div className="col-span-2 text-right font-mono text-sm">
@@ -312,8 +291,8 @@ export default function Home() {
 				</div>
 			</section>
 
-			{/* Pricing teaser */}
-			<section className="py-24 px-6 border-t border-[var(--border)]">
+			{/* Pricing */}
+			<section id="pricing" className="py-24 px-6 border-t border-[var(--border)]">
 				<div className="max-w-6xl mx-auto text-center">
 					<h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
 					<p className="text-[var(--muted)] mb-12">Start free, upgrade when you need more</p>
@@ -375,50 +354,6 @@ export default function Home() {
 					</code>
 				</div>
 			</section>
-
-			{/* Footer */}
-			<footer className="border-t border-[var(--border)]">
-				<div className="max-w-6xl mx-auto px-6 py-12">
-					<div className="grid md:grid-cols-4 gap-8 mb-8">
-						<div>
-							<span className="text-xl font-semibold text-[var(--accent)]">specto</span>
-							<p className="text-sm text-[var(--muted)] mt-2">
-								GitHub metrics, beautifully tracked.
-							</p>
-						</div>
-						<div>
-							<h4 className="font-medium mb-3">Product</h4>
-							<ul className="space-y-2 text-sm text-[var(--muted)]">
-								<li><Link href="#features" className="hover:text-[var(--foreground)]">Features</Link></li>
-								<li><Link href="#leaderboard" className="hover:text-[var(--foreground)]">Leaderboard</Link></li>
-								<li><Link href="#" className="hover:text-[var(--foreground)]">Pricing</Link></li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-medium mb-3">Resources</h4>
-							<ul className="space-y-2 text-sm text-[var(--muted)]">
-								<li><Link href="https://github.com/darkroomengineering/specto" className="hover:text-[var(--foreground)]">GitHub</Link></li>
-								<li><Link href="#" className="hover:text-[var(--foreground)]">Documentation</Link></li>
-								<li><Link href="#" className="hover:text-[var(--foreground)]">API</Link></li>
-							</ul>
-						</div>
-						<div>
-							<h4 className="font-medium mb-3">Company</h4>
-							<ul className="space-y-2 text-sm text-[var(--muted)]">
-								<li><Link href="https://darkroom.engineering" className="hover:text-[var(--foreground)]">Darkroom</Link></li>
-								<li><Link href="#" className="hover:text-[var(--foreground)]">Blog</Link></li>
-								<li><Link href="#" className="hover:text-[var(--foreground)]">Contact</Link></li>
-							</ul>
-						</div>
-					</div>
-					<div className="pt-8 border-t border-[var(--border)] flex items-center justify-between">
-						<span className="text-sm text-[var(--muted)]">
-							© 2025 <span className="text-[var(--accent)]">Darkroom Engineering</span>. All rights reserved.
-						</span>
-						<span className="text-sm text-[var(--muted)]">MIT License (CLI)</span>
-					</div>
-				</div>
-			</footer>
 		</div>
 	)
 }
