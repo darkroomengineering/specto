@@ -111,19 +111,19 @@ export function Dashboard() {
 	}, [username, getToken])
 
 	return (
-		<div className="h-full flex flex-col p-6 overflow-auto">
+		<div className="h-full flex flex-col p-8 overflow-auto">
 			{/* Header */}
-			<div className="mb-6">
-				<h1 className="text-xl font-semibold text-[var(--foreground)]">
+			<div className="mb-8">
+				<h1 className="text-2xl font-semibold text-[var(--foreground)]">
 					Welcome back, <span className="text-[var(--accent)]">{username}</span>
 				</h1>
-				<p className="text-sm text-[var(--muted)] mt-1">
+				<p className="text-sm text-[var(--muted)] mt-2">
 					Your GitHub activity at a glance
 				</p>
 			</div>
 
 			{/* User stats */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 				<Stat
 					label="Repositories"
 					value={isLoading ? <Spinner size="sm" /> : userStats?.publicRepos ?? '—'}
@@ -148,24 +148,24 @@ export function Dashboard() {
 
 			{/* Organizations */}
 			{userStats && userStats.orgs.length > 0 && (
-				<Card className="mb-6">
+				<Card className="mb-8">
 					<Card.Header>
-						<h2 className="text-sm font-medium text-[var(--muted)]">Your Organizations</h2>
+						<h2 className="text-lg font-medium">Your Organizations</h2>
 					</Card.Header>
 					<Card.Content>
-						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
 							{userStats.orgs.map((org) => (
 								<button
 									key={org.login}
 									onClick={() => navigate(`/org/${org.login}`)}
-									className="flex flex-col items-center gap-2 p-4 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card-hover)] transition-all text-center group"
+									className="flex flex-col items-center gap-3 p-5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card-hover)] transition-all text-center group"
 								>
 									<img
 										src={org.avatar_url}
 										alt={org.login}
-										className="w-10 h-10 rounded-lg group-hover:scale-105 transition-transform"
+										className="w-12 h-12 rounded-lg group-hover:scale-105 transition-transform"
 									/>
-									<span className="text-xs font-medium truncate w-full">{org.login}</span>
+									<span className="text-sm font-medium truncate w-full">{org.login}</span>
 								</button>
 							))}
 						</div>

@@ -169,9 +169,9 @@ export function Organization() {
 	}
 
 	return (
-		<div className="h-full flex flex-col p-6 overflow-auto">
+		<div className="h-full flex flex-col p-8 overflow-auto">
 			{/* Header */}
-			<div className="mb-6 flex items-start justify-between">
+			<div className="mb-8 flex items-start justify-between">
 				<div>
 					<button
 						onClick={() => navigate('/dashboard')}
@@ -222,7 +222,7 @@ export function Organization() {
 			)}
 
 			{/* Stats grid */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 				<Stat
 					label="Total Commits"
 					value={isLoading.commits ? '...' : totalCommits || '—'}
@@ -246,7 +246,7 @@ export function Organization() {
 			</div>
 
 			{/* Secondary stats */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 				<Stat
 					label="Members"
 					value={isLoading.members ? '...' : members.length || '—'}
@@ -276,7 +276,7 @@ export function Organization() {
 			</div>
 
 			{/* Content grid */}
-			<div className="grid lg:grid-cols-2 gap-6 flex-1">
+			<div className="grid lg:grid-cols-2 gap-8 flex-1">
 				{/* Top contributors based on selected metric */}
 				<Card className="flex flex-col">
 					<Card.Header>
