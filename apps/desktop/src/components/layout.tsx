@@ -165,48 +165,50 @@ export function Layout() {
 					<Outlet />
 				</main>
 
-				{/* Floating search bar */}
-				<div className={cn(
-					"absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-200",
-					searchFocused ? "w-96" : "w-72"
-				)}>
+				{/* Floating search bar - hidden on settings page */}
+				{location.pathname !== '/settings' && (
 					<div className={cn(
-						"flex items-center gap-2 px-4 py-2.5 rounded-full border bg-[var(--card)] shadow-lg backdrop-blur-sm transition-all duration-200",
-						searchFocused
-							? "border-[var(--accent)] shadow-[0_0_20px_rgba(227,6,19,0.15)]"
-							: "border-[var(--border)] hover:border-[var(--muted)]"
+						"absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-200",
+						searchFocused ? "w-96" : "w-72"
 					)}>
-						<svg className="w-4 h-4 text-[var(--muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-						</svg>
-						<input
-							ref={inputRef}
-							type="text"
-							value={orgInput}
-							onChange={(e) => setOrgInput(e.target.value)}
-							onFocus={() => setSearchFocused(true)}
-							onBlur={() => !orgInput && setSearchFocused(false)}
-							onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-							placeholder="Search organization..."
-							className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none"
-						/>
-						{!searchFocused && !orgInput && (
-							<kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)] bg-[var(--background)] rounded border border-[var(--border)]">
-								<span className="text-xs">⌘</span>K
-							</kbd>
-						)}
-						{orgInput && (
-							<button
-								onClick={handleSearch}
-								className="flex-shrink-0 p-1 rounded-full bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors"
-							>
-								<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-								</svg>
-							</button>
-						)}
+						<div className={cn(
+							"flex items-center gap-2 px-4 py-2.5 rounded-full border bg-[var(--card)] shadow-lg backdrop-blur-sm transition-all duration-200",
+							searchFocused
+								? "border-[var(--accent)] shadow-[0_0_20px_rgba(227,6,19,0.15)]"
+								: "border-[var(--border)] hover:border-[var(--muted)]"
+						)}>
+							<svg className="w-4 h-4 text-[var(--muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+							</svg>
+							<input
+								ref={inputRef}
+								type="text"
+								value={orgInput}
+								onChange={(e) => setOrgInput(e.target.value)}
+								onFocus={() => setSearchFocused(true)}
+								onBlur={() => !orgInput && setSearchFocused(false)}
+								onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+								placeholder="Search organization..."
+								className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none"
+							/>
+							{!searchFocused && !orgInput && (
+								<kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)] bg-[var(--background)] rounded border border-[var(--border)]">
+									<span className="text-xs">⌘</span>K
+								</kbd>
+							)}
+							{orgInput && (
+								<button
+									onClick={handleSearch}
+									className="flex-shrink-0 p-1 rounded-full bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors"
+								>
+									<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+									</svg>
+								</button>
+							)}
+						</div>
 					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	)
