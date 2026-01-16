@@ -37,6 +37,54 @@ function setCache(key: string, data: unknown): void {
 // In-flight request deduplication
 const inFlightRequests = new Map<string, Promise<unknown>>()
 
+// Pagination helper - fetches all pages from GitHub API
+async function fetchAllPages<T>(
+	endpoint: string,
+	token: string,
+	params: Record<string, string | number | undefined> = {},
+	maxPages = 10
+): Promise<T[]> {
+	const results: T[] = []
+	let page = 1
+	const perPage = 100
+
+	while (page <= maxPages) {
+		const url = new URL(`https://api.github.com${endpoint}`)
+		url.searchParams.set('per_page', String(perPage))
+		url.searchParams.set('page', String(page))
+
+		for (const [key, value] of Object.entries(params)) {
+			if (value !== undefined) {
+				url.searchParams.set(key, String(value))
+			}
+		}
+
+		const response = await fetch(url.toString(), {
+			headers: {
+				Authorization: `Bearer ${token}`,
+				Accept: 'application/vnd.github+json',
+			},
+		})
+
+		if (!response.ok) {
+			throw new Error(`GitHub API error: ${response.status}`)
+		}
+
+		const data = await response.json() as T[]
+
+		if (data.length === 0) break
+
+		results.push(...data)
+
+		// If we got fewer than perPage, we've reached the end
+		if (data.length < perPage) break
+
+		page++
+	}
+
+	return results
+}
+
 interface PRStats {
 	author: string
 	count: number
@@ -57,6 +105,7 @@ interface OrgData {
 	commitStats: CommitStats[]
 	prStats: PRStats[]
 	issueStats: IssueStats[]
+	totalCommits: number
 	totalPRs: number
 	totalIssues: number
 	totalLinesAdded: number
@@ -169,6 +218,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		commitStats: [],
 		prStats: [],
 		issueStats: [],
+		totalCommits: 0,
 		totalPRs: 0,
 		totalIssues: 0,
 		totalLinesAdded: 0,
@@ -198,6 +248,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 				commitStats: [],
 				prStats: [],
 				issueStats: [],
+				totalCommits: 0,
 				totalPRs: 0,
 				totalIssues: 0,
 				totalLinesAdded: 0,
@@ -243,7 +294,16 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
 		set((s) => ({ isLoading: { ...s.isLoading, members: true } }))
 		try {
-			const members = await githubFetch<Member[]>(`/orgs/${currentOrg}/members?per_page=100`)
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
+			// Fetch ALL members with pagination
+			const members = await fetchAllPages<Member>(
+				`/orgs/${currentOrg}/members`,
+				token,
+				{},
+				10
+			)
 			set((s) => ({
 				orgData: { ...s.orgData, members },
 				isLoading: { ...s.isLoading, members: false },
@@ -259,7 +319,16 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
 		set((s) => ({ isLoading: { ...s.isLoading, teams: true } }))
 		try {
-			const teams = await githubFetch<Team[]>(`/orgs/${currentOrg}/teams?per_page=100`)
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
+			// Fetch ALL teams with pagination
+			const teams = await fetchAllPages<Team>(
+				`/orgs/${currentOrg}/teams`,
+				token,
+				{},
+				10
+			)
 			set((s) => ({
 				orgData: { ...s.orgData, teams },
 				isLoading: { ...s.isLoading, teams: false },
@@ -275,7 +344,16 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
 		set((s) => ({ isLoading: { ...s.isLoading, repos: true } }))
 		try {
-			const repos = await githubFetch<Repository[]>(`/orgs/${currentOrg}/repos?per_page=100&sort=pushed`)
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
+			// Fetch ALL repos with pagination (up to 10 pages = 1000 repos)
+			const repos = await fetchAllPages<Repository>(
+				`/orgs/${currentOrg}/repos`,
+				token,
+				{ type: 'all', sort: 'pushed' },
+				10
+			)
 			set((s) => ({
 				orgData: { ...s.orgData, repos },
 				isLoading: { ...s.isLoading, repos: false },
@@ -292,46 +370,68 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		set((s) => ({ isLoading: { ...s.isLoading, commits: true } }))
 
 		try {
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
 			// Get repos first if not loaded
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await githubFetch<Repository[]>(`/orgs/${currentOrg}/repos?per_page=100&sort=pushed`)
+				repos = await fetchAllPages<Repository>(
+					`/orgs/${currentOrg}/repos`,
+					token,
+					{ type: 'all', sort: 'pushed' },
+					10
+				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
 
-			// Get commits from top 10 most active repos (to keep it fast)
-			const topRepos = repos.slice(0, 10)
+			// Process repos in batches to avoid rate limiting
+			// Use all repos but limit commits per repo for performance
 			const commitsByAuthor = new Map<string, number>()
-
 			const since = getDateSince(timeframe)
 
-			await Promise.all(
-				topRepos.map(async (repo) => {
-					try {
-						const commits = await githubFetch<Array<{ author?: { login: string } }>>(
-							`/repos/${repo.full_name}/commits?per_page=100&since=${since}`
-						)
-						for (const commit of commits) {
-							if (commit.author?.login) {
-								const current = commitsByAuthor.get(commit.author.login) ?? 0
-								commitsByAuthor.set(commit.author.login, current + 1)
+			// Process in batches of 10 for better parallelization
+			const batchSize = 10
+			for (let i = 0; i < repos.length; i += batchSize) {
+				const batch = repos.slice(i, i + batchSize)
+
+				await Promise.all(
+					batch.map(async (repo) => {
+						try {
+							// Paginate commits (up to 3 pages = 300 commits per repo)
+							const commits = await fetchAllPages<{ author?: { login: string } }>(
+								`/repos/${repo.full_name}/commits`,
+								token,
+								{ since },
+								3
+							)
+							for (const commit of commits) {
+								if (commit.author?.login) {
+									const current = commitsByAuthor.get(commit.author.login) ?? 0
+									commitsByAuthor.set(commit.author.login, current + 1)
+								}
 							}
+						} catch {
+							// Skip repos we can't access
 						}
-					} catch {
-						// Skip repos we can't access
-					}
-				})
-			)
+					})
+				)
+			}
 
-			const commitStats: CommitStats[] = Array.from(commitsByAuthor.entries())
-				.map(([author, count]) => ({ author, count }))
-				.sort((a, b) => b.count - a.count)
-				.slice(0, 10)
+		const allStats = Array.from(commitsByAuthor.entries())
+			.map(([author, count]) => ({ author, count }))
+			.sort((a, b) => b.count - a.count)
 
-			set((s) => ({
-				orgData: { ...s.orgData, commitStats },
-				isLoading: { ...s.isLoading, commits: false },
-			}))
+		// Calculate total from ALL contributors
+		const totalCommits = allStats.reduce((sum, s) => sum + s.count, 0)
+
+		// Keep top 10 for display
+		const commitStats: CommitStats[] = allStats.slice(0, 10)
+
+		set((s) => ({
+			orgData: { ...s.orgData, commitStats, totalCommits },
+			isLoading: { ...s.isLoading, commits: false },
+		}))
 		} catch (err) {
 			set((s) => ({ isLoading: { ...s.isLoading, commits: false } }))
 		}
@@ -344,42 +444,62 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		set((s) => ({ isLoading: { ...s.isLoading, prs: true } }))
 
 		try {
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await githubFetch<Repository[]>(`/orgs/${currentOrg}/repos?per_page=100&sort=pushed`)
+				repos = await fetchAllPages<Repository>(
+					`/orgs/${currentOrg}/repos`,
+					token,
+					{ type: 'all', sort: 'pushed' },
+					10
+				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
 
-			const topRepos = repos.slice(0, 10)
 			const prsByAuthor = new Map<string, { count: number; merged: number }>()
 			let totalPRs = 0
 
 			const since = getDateSince(timeframe)
+			const sinceDate = new Date(since)
 
-			await Promise.all(
-				topRepos.map(async (repo) => {
-					try {
-						const prs = await githubFetch<Array<{
-							user?: { login: string }
-							merged_at: string | null
-							created_at: string
-						}>>(`/repos/${repo.full_name}/pulls?state=all&per_page=100&sort=created&direction=desc`)
+			// Process repos in batches
+			const batchSize = 10
+			for (let i = 0; i < repos.length; i += batchSize) {
+				const batch = repos.slice(i, i + batchSize)
 
-						for (const pr of prs) {
-							if (new Date(pr.created_at) < new Date(since)) continue
-							totalPRs++
-							if (pr.user?.login) {
-								const current = prsByAuthor.get(pr.user.login) ?? { count: 0, merged: 0 }
-								current.count++
-								if (pr.merged_at) current.merged++
-								prsByAuthor.set(pr.user.login, current)
+				await Promise.all(
+					batch.map(async (repo) => {
+						try {
+							// Paginate PRs (up to 3 pages = 300 PRs per repo)
+							const prs = await fetchAllPages<{
+								user?: { login: string }
+								merged_at: string | null
+								created_at: string
+							}>(
+								`/repos/${repo.full_name}/pulls`,
+								token,
+								{ state: 'all', sort: 'created', direction: 'desc' },
+								3
+							)
+
+							for (const pr of prs) {
+								if (new Date(pr.created_at) < sinceDate) continue
+								totalPRs++
+								if (pr.user?.login) {
+									const current = prsByAuthor.get(pr.user.login) ?? { count: 0, merged: 0 }
+									current.count++
+									if (pr.merged_at) current.merged++
+									prsByAuthor.set(pr.user.login, current)
+								}
 							}
+						} catch {
+							// Skip repos we can't access
 						}
-					} catch {
-						// Skip repos we can't access
-					}
-				})
-			)
+					})
+				)
+			}
 
 			const prStats: PRStats[] = Array.from(prsByAuthor.entries())
 				.map(([author, stats]) => ({ author, count: stats.count, merged: stats.merged }))
@@ -402,45 +522,65 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		set((s) => ({ isLoading: { ...s.isLoading, issues: true } }))
 
 		try {
+			const token = await useAuthStore.getState().getToken()
+			if (!token) throw new Error('Not authenticated')
+
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await githubFetch<Repository[]>(`/orgs/${currentOrg}/repos?per_page=100&sort=pushed`)
+				repos = await fetchAllPages<Repository>(
+					`/orgs/${currentOrg}/repos`,
+					token,
+					{ type: 'all', sort: 'pushed' },
+					10
+				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
 
-			const topRepos = repos.slice(0, 10)
 			const issuesByAuthor = new Map<string, { opened: number; closed: number }>()
 			let totalIssues = 0
 
 			const since = getDateSince(timeframe)
+			const sinceDate = new Date(since)
 
-			await Promise.all(
-				topRepos.map(async (repo) => {
-					try {
-						const issues = await githubFetch<Array<{
-							user?: { login: string }
-							state: string
-							created_at: string
-							pull_request?: unknown
-						}>>(`/repos/${repo.full_name}/issues?state=all&per_page=100&since=${since}`)
+			// Process repos in batches
+			const batchSize = 10
+			for (let i = 0; i < repos.length; i += batchSize) {
+				const batch = repos.slice(i, i + batchSize)
 
-						for (const issue of issues) {
-							// Skip pull requests (they show up in issues endpoint too)
-							if (issue.pull_request) continue
-							if (new Date(issue.created_at) < new Date(since)) continue
-							totalIssues++
-							if (issue.user?.login) {
-								const current = issuesByAuthor.get(issue.user.login) ?? { opened: 0, closed: 0 }
-								current.opened++
-								if (issue.state === 'closed') current.closed++
-								issuesByAuthor.set(issue.user.login, current)
+				await Promise.all(
+					batch.map(async (repo) => {
+						try {
+							// Paginate issues (up to 3 pages = 300 issues per repo)
+							const issues = await fetchAllPages<{
+								user?: { login: string }
+								state: string
+								created_at: string
+								pull_request?: unknown
+							}>(
+								`/repos/${repo.full_name}/issues`,
+								token,
+								{ state: 'all', since },
+								3
+							)
+
+							for (const issue of issues) {
+								// Skip pull requests (they show up in issues endpoint too)
+								if (issue.pull_request) continue
+								if (new Date(issue.created_at) < sinceDate) continue
+								totalIssues++
+								if (issue.user?.login) {
+									const current = issuesByAuthor.get(issue.user.login) ?? { opened: 0, closed: 0 }
+									current.opened++
+									if (issue.state === 'closed') current.closed++
+									issuesByAuthor.set(issue.user.login, current)
+								}
 							}
+						} catch {
+							// Skip repos we can't access
 						}
-					} catch {
-						// Skip repos we can't access
-					}
-				})
-			)
+					})
+				)
+			}
 
 			const issueStats: IssueStats[] = Array.from(issuesByAuthor.entries())
 				.map(([author, stats]) => ({ author, opened: stats.opened, closed: stats.closed }))
