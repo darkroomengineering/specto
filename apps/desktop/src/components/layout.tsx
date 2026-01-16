@@ -67,12 +67,12 @@ export function Layout() {
 			{/* Sidebar */}
 			<aside className="w-48 flex-shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col rounded-tr-xl">
 				{/* Main nav */}
-				<nav className="p-2 pt-3">
+				<nav className="p-2 pt-4 space-y-1">
 					<NavLink
 						to="/dashboard"
 						className={({ isActive }) =>
 							cn(
-								'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors',
+								'flex items-center gap-2 px-3 py-2.5 rounded-md text-sm transition-colors',
 								isActive
 									? 'bg-[var(--accent)] text-white'
 									: 'text-[var(--foreground)] hover:bg-[var(--card-hover)]'
@@ -83,6 +83,22 @@ export function Layout() {
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
 						</svg>
 						<span>Dashboard</span>
+					</NavLink>
+					<NavLink
+						to="/leaderboard"
+						className={({ isActive }) =>
+							cn(
+								'flex items-center gap-2 px-3 py-2.5 rounded-md text-sm transition-colors',
+								isActive
+									? 'bg-[var(--accent)] text-white'
+									: 'text-[var(--foreground)] hover:bg-[var(--card-hover)]'
+							)
+						}
+					>
+						<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+						</svg>
+						<span>Leaderboard</span>
 					</NavLink>
 				</nav>
 
@@ -123,12 +139,12 @@ export function Layout() {
 				</div>
 
 				{/* Settings link */}
-				<div className="p-2 border-t border-[var(--border)]">
+				<div className="p-2 pt-3 border-t border-[var(--border)]">
 					<NavLink
 						to="/settings"
 						className={({ isActive }) =>
 							cn(
-								'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors',
+								'flex items-center gap-2 px-3 py-2.5 rounded-md text-sm transition-colors',
 								isActive
 									? 'bg-[var(--card-hover)] text-[var(--foreground)]'
 									: 'text-[var(--muted)] hover:bg-[var(--card-hover)] hover:text-[var(--foreground)]'
@@ -165,8 +181,8 @@ export function Layout() {
 					<Outlet />
 				</main>
 
-				{/* Floating search bar - hidden on settings page */}
-				{location.pathname !== '/settings' && (
+				{/* Floating search bar - hidden on settings and leaderboard pages */}
+				{location.pathname !== '/settings' && location.pathname !== '/leaderboard' && (
 					<div className={cn(
 						"absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-200",
 						searchFocused ? "w-96" : "w-72"

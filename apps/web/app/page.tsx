@@ -1,61 +1,21 @@
 import { Button, Card } from '@specto/ui'
 import Link from 'next/link'
 import { getLeaderboardData, fallbackLeaderboardData } from '@/lib/github'
+import { HeroLeaderboard } from '@/components/hero-leaderboard'
 
 // Format number for display
 function formatNumber(num: number): string {
+	if (num >= 1000000) {
+		return (num / 1000000).toFixed(1) + 'M'
+	}
 	if (num >= 1000) {
 		return (num / 1000).toFixed(1) + 'k'
 	}
 	return num.toString()
 }
 
-// Calculate a score based on activity
-function calculateScore(commits: number, prs: number, contributors: number): number {
-	const score = (commits * 0.5 + prs * 2 + contributors * 10) / 100
-	return Math.min(99.9, Math.max(50, score))
-}
-
-// Rank badge component
-function RankBadge({ rank }: { rank: number }) {
-	if (rank === 1) {
-		return (
-			<div className="relative">
-				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-					</svg>
-				</div>
-				<div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] font-bold text-yellow-900">1</div>
-			</div>
-		)
-	}
-	if (rank === 2) {
-		return (
-			<div className="relative">
-				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 flex items-center justify-center shadow-lg shadow-gray-400/30">
-					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-					</svg>
-				</div>
-				<div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-700">2</div>
-			</div>
-		)
-	}
-	return (
-		<div className="relative">
-			<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/30">
-				<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-				</svg>
-			</div>
-			<div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] font-bold text-amber-900">3</div>
-		</div>
-	)
-}
-
 export default async function Home() {
-	// Fetch live leaderboard data
+	// Fetch live leaderboard data for initial render
 	let leaderboardData = fallbackLeaderboardData
 	try {
 		leaderboardData = await getLeaderboardData()
@@ -65,16 +25,6 @@ export default async function Home() {
 	} catch {
 		// Use fallback data on error
 	}
-
-	// Prepare hero data (top 3)
-	const heroOrgs = leaderboardData.slice(0, 3).map((org, index) => ({
-		rank: index + 1,
-		name: org.name,
-		avatarUrl: org.avatarUrl,
-		score: calculateScore(org.commits, org.prs, org.contributors).toFixed(1),
-		commits: formatNumber(org.commits),
-		trend: ['+12%', '+8%', '+15%'][index] || '+5%',
-	}))
 
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
@@ -125,60 +75,7 @@ export default async function Home() {
 					</div>
 
 					{/* Hero Leaderboard Preview */}
-					<div className="relative max-w-2xl mx-auto">
-						{/* Glow effect behind */}
-						<div className="absolute -inset-4 bg-gradient-to-r from-[var(--accent)]/20 via-transparent to-[var(--accent)]/20 rounded-3xl blur-2xl opacity-50" />
-
-						<div className="relative rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-sm shadow-2xl overflow-hidden">
-							{/* Header */}
-							<div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] to-[var(--background)]">
-								<div className="flex items-center gap-2">
-									<svg className="w-5 h-5 text-[var(--accent)]" fill="currentColor" viewBox="0 0 24 24">
-										<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
-									</svg>
-									<span className="font-semibold text-sm sm:text-base">Global Leaderboard</span>
-								</div>
-								<span className="text-xs text-[var(--muted)] hidden sm:inline">Updated 5 min ago</span>
-							</div>
-
-							{/* Leaderboard entries */}
-							<div className="divide-y divide-[var(--border)]">
-								{heroOrgs.map((org, index) => (
-									<div
-										key={org.name}
-										className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 transition-colors hover:bg-[var(--card-hover)] ${
-											index === 0 ? 'bg-gradient-to-r from-yellow-500/5 to-transparent' : ''
-										}`}
-									>
-										<RankBadge rank={org.rank} />
-										<img
-											src={`${org.avatarUrl}?s=80`}
-											alt={org.name}
-											className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-[var(--border)]"
-										/>
-										<div className="flex-1 min-w-0">
-											<p className="font-semibold text-sm sm:text-base truncate">{org.name}</p>
-											<p className="text-xs text-[var(--muted)]">{org.commits} commits</p>
-										</div>
-										<div className="text-right">
-											<p className="text-lg sm:text-xl font-bold text-[var(--accent)]">{org.score}</p>
-											<p className="text-xs text-emerald-500 font-medium">{org.trend}</p>
-										</div>
-									</div>
-								))}
-							</div>
-
-							{/* Footer CTA */}
-							<div className="px-4 sm:px-6 py-4 bg-[var(--background)] border-t border-[var(--border)]">
-								<Link href="/leaderboard" className="flex items-center justify-center gap-2 text-sm text-[var(--accent)] hover:underline">
-									View full rankings
-									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-									</svg>
-								</Link>
-							</div>
-						</div>
-					</div>
+					<HeroLeaderboard initialData={leaderboardData} initialCategory="developer-favorites" />
 				</div>
 			</section>
 
@@ -326,10 +223,10 @@ export default async function Home() {
 									{/* Stats grid */}
 									<div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
 										{[
-											{ label: 'Total Commits', value: formatNumber(leaderboardData[0]?.commits || 12847), desc: 'Last 30 days' },
-											{ label: 'Pull Requests', value: formatNumber(leaderboardData[0]?.prs || 3421), desc: 'Last 30 days' },
-											{ label: 'Issues', value: '1.2k', desc: 'Last 30 days' },
-											{ label: 'Repositories', value: leaderboardData[0]?.repos?.toString() || '156', desc: 'Total repos' },
+											{ label: 'Repositories', value: formatNumber(leaderboardData[0]?.repos || 156), desc: 'Public repos' },
+											{ label: 'Stars', value: formatNumber(leaderboardData[0]?.stars || 450000), desc: 'Across all repos' },
+											{ label: 'Followers', value: formatNumber(leaderboardData[0]?.followers || 8900), desc: 'Org followers' },
+											{ label: 'Activity Score', value: leaderboardData[0]?.activityScore?.toString() || '95', desc: 'Relative score' },
 										].map((stat) => (
 											<div key={stat.label} className="p-3 sm:p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
 												<p className="text-xl sm:text-2xl font-bold text-[var(--accent)]">{stat.value}</p>
@@ -342,10 +239,10 @@ export default async function Home() {
 									{/* Secondary stats */}
 									<div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
 										{[
-											{ label: 'Members', value: leaderboardData[0]?.contributors?.toString() || '89', desc: 'Organization members' },
+											{ label: 'Members', value: '89', desc: 'Organization members' },
 											{ label: 'Teams', value: '12', desc: 'Active teams' },
 											{ label: 'Contributors', value: '234', desc: 'Active contributors' },
-											{ label: 'Avg Commits', value: '145', desc: 'Per contributor' },
+											{ label: 'Open Issues', value: '1.2k', desc: 'Across all repos' },
 										].map((stat) => (
 											<div key={stat.label} className="p-3 sm:p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
 												<p className="text-xl sm:text-2xl font-bold text-[var(--accent)]">{stat.value}</p>
