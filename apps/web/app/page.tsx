@@ -1,7 +1,14 @@
 import { Button, Card } from '@specto/ui'
 import Link from 'next/link'
 
-// Mock leaderboard data - in production this would come from an API
+// Hero leaderboard data
+const heroOrgs = [
+	{ rank: 1, name: 'vercel', avatarUrl: 'https://avatars.githubusercontent.com/u/14985020', score: 98.7, commits: '12.8k', trend: '+12%' },
+	{ rank: 2, name: 'facebook', avatarUrl: 'https://avatars.githubusercontent.com/u/69631', score: 95.2, commits: '11.2k', trend: '+8%' },
+	{ rank: 3, name: 'microsoft', avatarUrl: 'https://avatars.githubusercontent.com/u/6154722', score: 93.8, commits: '10.9k', trend: '+15%' },
+]
+
+// Leaderboard section data
 const topOrgs = [
 	{ rank: 1, name: 'vercel', avatarUrl: 'https://avatars.githubusercontent.com/u/14985020', commits: 12847, prs: 3421, contributors: 89 },
 	{ rank: 2, name: 'facebook', avatarUrl: 'https://avatars.githubusercontent.com/u/69631', commits: 11203, prs: 2987, contributors: 156 },
@@ -10,37 +17,82 @@ const topOrgs = [
 	{ rank: 5, name: 'apple', avatarUrl: 'https://avatars.githubusercontent.com/u/10639145', commits: 8234, prs: 1987, contributors: 92 },
 ]
 
+// Rank badge component
+function RankBadge({ rank }: { rank: number }) {
+	if (rank === 1) {
+		return (
+			<div className="relative">
+				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+					</svg>
+				</div>
+				<div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] font-bold text-yellow-900">1</div>
+			</div>
+		)
+	}
+	if (rank === 2) {
+		return (
+			<div className="relative">
+				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 flex items-center justify-center shadow-lg shadow-gray-400/30">
+					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+					</svg>
+				</div>
+				<div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-700">2</div>
+			</div>
+		)
+	}
+	return (
+		<div className="relative">
+			<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/30">
+				<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+				</svg>
+			</div>
+			<div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] font-bold text-amber-900">3</div>
+		</div>
+	)
+}
+
 export default function Home() {
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
 			{/* Hero section */}
-			<section className="pt-32 pb-16 px-6">
-				<div className="max-w-6xl mx-auto">
-					<div className="text-center mb-16">
-						<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--muted)] mb-6">
+			<section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
+				{/* Background effects */}
+				<div className="absolute inset-0 overflow-hidden pointer-events-none">
+					<div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--accent)]/5 rounded-full blur-3xl" />
+					<div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--accent)]/5 rounded-full blur-3xl" />
+				</div>
+
+				<div className="relative max-w-6xl mx-auto">
+					{/* Header content */}
+					<div className="text-center mb-12 sm:mb-16">
+						<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-xs text-[var(--accent)] mb-6">
 							<span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
-							Now tracking 10,000+ organizations
+							Live rankings updated every hour
 						</div>
-						<h1 className="text-6xl font-bold text-[var(--foreground)] mb-6 leading-tight">
-							GitHub metrics,<br />
-							<span className="text-[var(--accent)]">beautifully tracked</span>
+						<h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[var(--foreground)] mb-4 sm:mb-6 leading-tight">
+							Where does your org<br />
+							<span className="text-[var(--accent)]">rank globally?</span>
 						</h1>
-						<p className="text-xl text-[var(--muted)] max-w-2xl mx-auto mb-8">
-							Track commits, contributors, pull requests, and more across your GitHub organizations.
-							See how your team stacks up on the global leaderboard.
+						<p className="text-base sm:text-xl text-[var(--muted)] max-w-2xl mx-auto mb-6 sm:mb-8">
+							Track commits, contributors, and PRs. Compete on the global leaderboard.
+							See how your engineering team stacks up against the best.
 						</p>
-						<div className="flex items-center justify-center gap-4 mb-4">
-							<Link href="/downloads">
-								<Button size="lg">
-									<span className="flex items-center gap-2">
+						<div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
+							<Link href="/downloads" className="w-full sm:w-auto">
+								<Button size="lg" className="w-full sm:w-auto">
+									<span className="flex items-center justify-center gap-2">
 										<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
 										Download for Mac
 									</span>
 								</Button>
 							</Link>
-							<Link href="/downloads">
-								<Button variant="secondary" size="lg">
-									<span className="flex items-center gap-2">
+							<Link href="/downloads" className="w-full sm:w-auto">
+								<Button variant="secondary" size="lg" className="w-full sm:w-auto">
+									<span className="flex items-center justify-center gap-2">
 										<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
 										Download for Windows
 									</span>
@@ -48,125 +100,62 @@ export default function Home() {
 							</Link>
 						</div>
 						<p className="text-xs text-[var(--muted)]">
-							Also available as <code className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">npm i -g specto-cli</code>
+							Also available as <code className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">npx specto-cli</code>
 						</p>
 					</div>
 
-					{/* App Preview */}
-					<div className="relative max-w-4xl mx-auto">
-						<div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-transparent to-transparent z-10 pointer-events-none" />
-						<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-2xl overflow-hidden">
-							{/* Window chrome */}
-							<div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-[var(--background)]">
-								<div className="flex gap-1.5">
-									<div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-									<div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-									<div className="w-3 h-3 rounded-full bg-[#28c840]" />
+					{/* Hero Leaderboard Preview */}
+					<div className="relative max-w-2xl mx-auto">
+						{/* Glow effect behind */}
+						<div className="absolute -inset-4 bg-gradient-to-r from-[var(--accent)]/20 via-transparent to-[var(--accent)]/20 rounded-3xl blur-2xl opacity-50" />
+
+						<div className="relative rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-sm shadow-2xl overflow-hidden">
+							{/* Header */}
+							<div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] to-[var(--background)]">
+								<div className="flex items-center gap-2">
+									<svg className="w-5 h-5 text-[var(--accent)]" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+									</svg>
+									<span className="font-semibold text-sm sm:text-base">Global Leaderboard</span>
 								</div>
-								<span className="flex-1 text-center text-xs text-[var(--muted)]">Specto</span>
+								<span className="text-xs text-[var(--muted)] hidden sm:inline">Updated 5 min ago</span>
 							</div>
-							{/* App content mockup */}
-							<div className="flex h-[320px] sm:h-[380px] md:h-[420px]">
-								{/* Sidebar - hidden on mobile */}
-								<div className="hidden md:flex w-48 border-r border-[var(--border)] bg-[var(--card)] flex-col rounded-tr-xl">
-									<nav className="p-2 pt-3">
-										<div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[var(--accent)] text-white text-sm">
-											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-											</svg>
-											<span>Dashboard</span>
+
+							{/* Leaderboard entries */}
+							<div className="divide-y divide-[var(--border)]">
+								{heroOrgs.map((org, index) => (
+									<div
+										key={org.name}
+										className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 transition-colors hover:bg-[var(--card-hover)] ${
+											index === 0 ? 'bg-gradient-to-r from-yellow-500/5 to-transparent' : ''
+										}`}
+									>
+										<RankBadge rank={org.rank} />
+										<img
+											src={`${org.avatarUrl}?s=80`}
+											alt={org.name}
+											className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-[var(--border)]"
+										/>
+										<div className="flex-1 min-w-0">
+											<p className="font-semibold text-sm sm:text-base truncate">{org.name}</p>
+											<p className="text-xs text-[var(--muted)]">{org.commits} commits</p>
 										</div>
-									</nav>
-									<div className="px-2 mt-1 flex-1">
-										<p className="px-3 py-1.5 text-[10px] font-medium text-[var(--muted)] uppercase tracking-wider">Recents</p>
-										<div className="space-y-0.5">
-											{[
-												{ name: 'vercel', avatar: 'https://avatars.githubusercontent.com/u/14985020?s=32' },
-												{ name: 'facebook', avatar: 'https://avatars.githubusercontent.com/u/69631?s=32' },
-												{ name: 'microsoft', avatar: 'https://avatars.githubusercontent.com/u/6154722?s=32' },
-											].map((org) => (
-												<div key={org.name} className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-[var(--muted)] hover:bg-[var(--card-hover)] transition-colors cursor-pointer">
-													<img src={org.avatar} alt="" className="w-4 h-4 rounded" />
-													<span className="truncate">{org.name}</span>
-												</div>
-											))}
+										<div className="text-right">
+											<p className="text-lg sm:text-xl font-bold text-[var(--accent)]">{org.score}</p>
+											<p className="text-xs text-emerald-500 font-medium">{org.trend}</p>
 										</div>
 									</div>
-									<div className="p-2 border-t border-[var(--border)]">
-										<div className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)] hover:bg-[var(--card-hover)] transition-colors cursor-pointer">
-											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-											</svg>
-											<span>Settings</span>
-										</div>
-									</div>
-									<div className="p-3 border-t border-[var(--border)]">
-										<div className="flex items-center gap-2">
-											<div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-medium">
-												D
-											</div>
-											<p className="text-xs font-medium truncate">darkroom</p>
-										</div>
-									</div>
-								</div>
-								{/* Main content */}
-								<div className="flex-1 p-4 sm:p-6 overflow-hidden relative">
-									<div className="mb-4 sm:mb-6">
-										<h2 className="text-lg sm:text-xl font-semibold">Welcome back, <span className="text-[var(--accent)]">darkroom</span></h2>
-										<p className="text-xs sm:text-sm text-[var(--muted)] mt-1">Your GitHub activity at a glance</p>
-									</div>
-									<div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
-										{[
-											{ label: 'Repositories', value: '47', desc: 'Public repos' },
-											{ label: 'Total Stars', value: '2.3k', desc: 'Across all repos' },
-											{ label: 'Commits', value: '892', desc: 'Last 30 days' },
-											{ label: 'Pull Requests', value: '156', desc: 'Last 30 days' },
-										].map((stat) => (
-											<div key={stat.label} className="p-3 sm:p-4 rounded-lg border border-[var(--border)] bg-[var(--background)]">
-												<p className="text-xl sm:text-2xl font-bold text-[var(--accent)]">{stat.value}</p>
-												<p className="text-[10px] sm:text-xs font-medium">{stat.label}</p>
-												<p className="text-[9px] sm:text-[10px] text-[var(--muted)] hidden sm:block">{stat.desc}</p>
-											</div>
-										))}
-									</div>
-									<div className="rounded-lg border border-[var(--border)] bg-[var(--card)]">
-										<div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-[var(--border)]">
-											<p className="text-xs sm:text-sm font-medium text-[var(--muted)]">Your Organizations</p>
-										</div>
-										<div className="p-3 sm:p-4">
-											<div className="grid grid-cols-4 gap-2 sm:gap-3">
-												{[
-													{ name: 'vercel', avatar: 'https://avatars.githubusercontent.com/u/14985020?s=64' },
-													{ name: 'facebook', avatar: 'https://avatars.githubusercontent.com/u/69631?s=64' },
-													{ name: 'microsoft', avatar: 'https://avatars.githubusercontent.com/u/6154722?s=64' },
-													{ name: 'google', avatar: 'https://avatars.githubusercontent.com/u/1342004?s=64' },
-												].map((org) => (
-													<div key={org.name} className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--accent)] transition-all cursor-pointer group">
-														<img
-															src={org.avatar}
-															alt={org.name}
-															className="w-6 h-6 sm:w-10 sm:h-10 rounded-lg group-hover:scale-105 transition-transform"
-														/>
-														<span className="text-[9px] sm:text-xs font-medium truncate w-full text-center">{org.name}</span>
-													</div>
-												))}
-											</div>
-										</div>
-									</div>
-									{/* Floating search bar */}
-									<div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-72">
-										<div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[var(--border)] bg-[var(--card)] shadow-lg hover:border-[var(--muted)] transition-colors">
-											<svg className="w-3 h-3 sm:w-4 sm:h-4 text-[var(--muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-											</svg>
-											<span className="flex-1 text-xs sm:text-sm text-[var(--muted)]">Search organization...</span>
-											<kbd className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)] bg-[var(--background)] rounded border border-[var(--border)]">
-												<span className="text-xs">⌘</span>K
-											</kbd>
-										</div>
-									</div>
-								</div>
+								))}
+							</div>
+
+							{/* Footer CTA */}
+							<div className="px-4 sm:px-6 py-4 bg-[var(--background)] border-t border-[var(--border)]">
+								<Link href="/leaderboard" className="flex items-center justify-center gap-2 text-sm text-[var(--accent)] hover:underline">
+									View full rankings
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+									</svg>
+								</Link>
 							</div>
 						</div>
 					</div>
