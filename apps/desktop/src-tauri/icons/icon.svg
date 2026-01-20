@@ -2,20 +2,23 @@
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#1a1a1a"/>
-      <stop offset="100%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#0d0d0d"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff3b3b"/>
+      <stop offset="0%" style="stop-color:#ff4444"/>
       <stop offset="100%" style="stop-color:#e30613"/>
     </linearGradient>
   </defs>
 
-  <!-- Background - full canvas, macOS applies rounding -->
-  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+  <!-- Background fills entire canvas - macOS applies the squircle mask automatically -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
 
-  <!-- Border highlight -->
-  <rect x="0" y="0" width="1024" height="1024" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-
-  <!-- S letter - centered and scaled -->
-  <path d="M 620 235 C 430 235 360 305 360 395 C 360 485 450 520 540 540 C 630 560 720 595 720 685 C 720 775 650 845 430 845 L 430 765 C 575 765 610 730 610 685 C 610 635 540 608 470 582 C 380 545 260 490 260 380 C 260 270 365 180 620 180 Z" fill="url(#accent)"/>
+  <!-- Sparkle/star icon centered -->
+  <g transform="translate(512, 512)">
+    <!-- Main 4-point star -->
+    <path d="M0 -280 L40 -40 L280 0 L40 40 L0 280 L-40 40 L-280 0 L-40 -40 Z" fill="url(#accent)"/>
+    <!-- Small sparkles -->
+    <path d="M180 -180 L195 -140 L235 -125 L195 -110 L180 -70 L165 -110 L125 -125 L165 -140 Z" fill="url(#accent)" opacity="0.8"/>
+    <path d="M-180 180 L-165 220 L-125 235 L-165 250 L-180 290 L-195 250 L-235 235 L-195 220 Z" fill="url(#accent)" opacity="0.8"/>
+  </g>
 </svg>

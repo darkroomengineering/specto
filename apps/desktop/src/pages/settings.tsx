@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card, Button, Badge } from '@specto/ui'
 import { toast } from 'sonner'
+import { getVersion } from '@tauri-apps/api/app'
 import { useAuthStore } from '../stores/auth'
 import { useLicenseStore, useProFeature, FREE_LIMITS } from '../stores/license'
 import { Spinner } from '../components/spinner'
@@ -76,6 +77,12 @@ export function Settings() {
 	} = useLicenseStore()
 	const { isPro, isDev } = useProFeature()
 	const [keyInput, setKeyInput] = useState('')
+	const [appVersion, setAppVersion] = useState<string>('')
+
+	// Get app version on mount
+	useEffect(() => {
+		getVersion().then(setAppVersion)
+	}, [])
 
 	// Show toast on license error
 	useEffect(() => {
@@ -210,7 +217,7 @@ export function Settings() {
 							<div className="space-y-3 text-sm">
 								<div className="flex justify-between">
 									<span className="text-[var(--muted)]">Version</span>
-									<span>1.1.1</span>
+									<span>{appVersion || '...'}</span>
 								</div>
 								<div className="flex justify-between">
 									<span className="text-[var(--muted)]">Plan</span>

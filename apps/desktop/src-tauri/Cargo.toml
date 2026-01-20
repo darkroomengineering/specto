@@ -1,6 +1,6 @@
 [package]
-name = "specto-desktop"
-version = "1.1.6"
+name = "specto"
+version = "1.1.7"
 description = "GitHub organization metrics dashboard"
 authors = ["Specto"]
 license = "MIT"
@@ -25,4 +25,3 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
-
