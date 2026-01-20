@@ -116,8 +116,9 @@ export async function getLatestRelease(): Promise<ReleaseInfo | null> {
 		}
 
 		// If no release has assets, return the latest version info anyway
-		if (releases.length > 0) {
-			return parseReleaseAssets(releases[0])
+		const firstRelease = releases[0]
+		if (firstRelease) {
+			return parseReleaseAssets(firstRelease)
 		}
 
 		return null
