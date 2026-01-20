@@ -8,19 +8,10 @@ function formatBytes(bytes: number): string {
 	return `${mb.toFixed(1)} MB`
 }
 
-// Format date to readable string
-function formatDate(dateString: string): string {
-	return new Date(dateString).toLocaleDateString('en-US', {
-		month: 'long',
-		year: 'numeric',
-	})
-}
-
 export default async function DownloadsPage() {
 	const release = await getLatestRelease()
 
 	const version = release?.version ?? 'Unknown'
-	const releaseDate = release?.publishedAt ? formatDate(release.publishedAt) : 'Unknown'
 
 	// Platform download options with dynamic assets
 	const platformDownloads = [
@@ -58,10 +49,9 @@ export default async function DownloadsPage() {
 				<p className="text-xl text-[var(--muted)] max-w-2xl mx-auto">
 					Get the desktop app for macOS or Windows. Free to use with optional Pro upgrade.
 				</p>
-				<div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--card)] text-sm">
-					<span className="w-2 h-2 rounded-full bg-green-500" />
-					Version {version} • Released {releaseDate}
-				</div>
+				<p className="mt-4 text-sm text-[var(--muted)]">
+					Latest: v{version}
+				</p>
 			</section>
 
 			{/* Downloads */}
@@ -74,10 +64,7 @@ export default async function DownloadsPage() {
 									<div className="w-14 h-14 rounded-xl bg-[var(--background)] border border-[var(--border)] flex items-center justify-center">
 										{platform.icon}
 									</div>
-									<div>
-										<h2 className="text-xl font-semibold">{platform.platform}</h2>
-										<p className="text-sm text-[var(--muted)]">v{version}</p>
-									</div>
+									<h2 className="text-xl font-semibold">{platform.platform}</h2>
 								</div>
 
 								<div className="space-y-3">

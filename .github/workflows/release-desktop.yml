@@ -89,23 +89,18 @@ jobs:
           releaseName: Specto v__VERSION__
           releaseBody: |
             See the release notes for details.
-
-            ## Downloads
-            - **macOS (Apple Silicon)**: Specto___VERSION___aarch64.dmg
-            - **macOS (Intel)**: Specto___VERSION___x64.dmg
-            - **Windows**: Specto___VERSION___x64-setup.exe
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
           updaterJsonPreferNsis: true
 
-  update-json:
+  finalize-release:
     needs: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get version from tag
+      - name: Get version
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -117,34 +112,85 @@ jobs:
       - name: Wait for release assets
         run: sleep 30
 
-      - name: Download signatures and create latest.json
+      - name: Rename assets and create latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Download signature files from release
-          gh release download "v${VERSION}" -p "*.sig" -D /tmp/sigs || true
+          mkdir -p /tmp/assets /tmp/sigs
 
-          # Read signatures (if they exist)
+          # Download all release assets
+          gh release download "v${VERSION}" -D /tmp/assets || true
+
+          # Rename files to remove version
+          cd /tmp/assets
+
+          # macOS ARM
+          if [ -f "Specto_${VERSION}_aarch64.dmg" ]; then
+            mv "Specto_${VERSION}_aarch64.dmg" "Specto-aarch64.dmg"
+            gh release upload "v${VERSION}" "Specto-aarch64.dmg" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_aarch64.dmg" --yes || true
+          fi
+          if [ -f "Specto_${VERSION}_aarch64.dmg.sig" ]; then
+            mv "Specto_${VERSION}_aarch64.dmg.sig" "Specto-aarch64.dmg.sig"
+            gh release upload "v${VERSION}" "Specto-aarch64.dmg.sig" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_aarch64.dmg.sig" --yes || true
+          fi
+
+          # macOS Intel
+          if [ -f "Specto_${VERSION}_x64.dmg" ]; then
+            mv "Specto_${VERSION}_x64.dmg" "Specto-x64.dmg"
+            gh release upload "v${VERSION}" "Specto-x64.dmg" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64.dmg" --yes || true
+          fi
+          if [ -f "Specto_${VERSION}_x64.dmg.sig" ]; then
+            mv "Specto_${VERSION}_x64.dmg.sig" "Specto-x64.dmg.sig"
+            gh release upload "v${VERSION}" "Specto-x64.dmg.sig" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64.dmg.sig" --yes || true
+          fi
+
+          # Windows EXE
+          if [ -f "Specto_${VERSION}_x64-setup.exe" ]; then
+            mv "Specto_${VERSION}_x64-setup.exe" "Specto-x64-setup.exe"
+            gh release upload "v${VERSION}" "Specto-x64-setup.exe" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64-setup.exe" --yes || true
+          fi
+          if [ -f "Specto_${VERSION}_x64-setup.exe.sig" ]; then
+            mv "Specto_${VERSION}_x64-setup.exe.sig" "Specto-x64-setup.exe.sig"
+            gh release upload "v${VERSION}" "Specto-x64-setup.exe.sig" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64-setup.exe.sig" --yes || true
+          fi
+
+          # Windows MSI
+          if [ -f "Specto_${VERSION}_x64_en-US.msi" ]; then
+            mv "Specto_${VERSION}_x64_en-US.msi" "Specto-x64.msi"
+            gh release upload "v${VERSION}" "Specto-x64.msi" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64_en-US.msi" --yes || true
+          fi
+          if [ -f "Specto_${VERSION}_x64_en-US.msi.sig" ]; then
+            mv "Specto_${VERSION}_x64_en-US.msi.sig" "Specto-x64.msi.sig"
+            gh release upload "v${VERSION}" "Specto-x64.msi.sig" --clobber
+            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64_en-US.msi.sig" --yes || true
+          fi
+
+          # Read signatures for latest.json
           DARWIN_AARCH64_SIG=""
           DARWIN_X64_SIG=""
           WINDOWS_SIG=""
 
-          if [ -f "/tmp/sigs/Specto_${VERSION}_aarch64.dmg.sig" ]; then
-            DARWIN_AARCH64_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_aarch64.dmg.sig")
+          if [ -f "Specto-aarch64.dmg.sig" ]; then
+            DARWIN_AARCH64_SIG=$(cat "Specto-aarch64.dmg.sig")
+          fi
+          if [ -f "Specto-x64.dmg.sig" ]; then
+            DARWIN_X64_SIG=$(cat "Specto-x64.dmg.sig")
+          fi
+          if [ -f "Specto-x64-setup.exe.sig" ]; then
+            WINDOWS_SIG=$(cat "Specto-x64-setup.exe.sig")
           fi
 
-          if [ -f "/tmp/sigs/Specto_${VERSION}_x64.dmg.sig" ]; then
-            DARWIN_X64_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_x64.dmg.sig")
-          fi
-
-          if [ -f "/tmp/sigs/Specto_${VERSION}_x64-setup.exe.sig" ]; then
-            WINDOWS_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_x64-setup.exe.sig")
-          fi
-
-          # Create latest.json
+          # Create latest.json (URLs without version in filename)
           cat > latest.json << EOF
           {
             "version": "${VERSION}",
@@ -153,25 +199,19 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "${DARWIN_AARCH64_SIG}",
-                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_aarch64.dmg"
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto-aarch64.dmg"
               },
               "darwin-x86_64": {
                 "signature": "${DARWIN_X64_SIG}",
-                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_x64.dmg"
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto-x64.dmg"
               },
               "windows-x86_64": {
                 "signature": "${WINDOWS_SIG}",
-                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_x64-setup.exe"
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto-x64-setup.exe"
               }
             }
           }
           EOF
 
           cat latest.json
-
-      - name: Upload latest.json to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
           gh release upload "v${VERSION}" latest.json --clobber
