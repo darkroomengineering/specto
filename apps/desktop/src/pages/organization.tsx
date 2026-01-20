@@ -46,8 +46,7 @@ export function Organization() {
 		}
 	}, [currentOrg, fetchAll])
 
-	const { info, members, teams, commitStats, prStats, issueStats, repos, totalPRs, totalIssues } = orgData
-	const totalCommits = commitStats.reduce((sum, s) => sum + s.count, 0)
+	const { info, members, teams, commitStats, prStats, issueStats, repos, totalCommits, totalPRs, totalIssues } = orgData
 
 	const getTimeframeLabel = (tf: Timeframe) => {
 		switch (tf) {
@@ -89,6 +88,11 @@ export function Organization() {
 		}
 
 		if (metricType === 'commits') {
+			// Calculate "Other" commits (total minus top 10)
+			const top10Total = commitStats.reduce((sum, s) => sum + s.count, 0)
+			const otherCommits = total - top10Total
+			const hasOther = otherCommits > 0
+
 			return (
 				<Table>
 					<Table.Header>
@@ -99,7 +103,7 @@ export function Organization() {
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{commitStats.slice(0, 5).map((stat) => (
+						{commitStats.map((stat) => (
 							<Table.Row key={stat.author}>
 								<Table.Cell className="font-medium">{stat.author}</Table.Cell>
 								<Table.Cell className="text-right text-[var(--accent)]">
@@ -110,12 +114,28 @@ export function Organization() {
 								</Table.Cell>
 							</Table.Row>
 						))}
+						{hasOther && (
+							<Table.Row>
+								<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">
+									{otherCommits}
+								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">
+									{total > 0 ? `${((otherCommits / total) * 100).toFixed(1)}%` : '—'}
+								</Table.Cell>
+							</Table.Row>
+						)}
 					</Table.Body>
 				</Table>
 			)
 		}
 
 		if (metricType === 'prs') {
+			// Calculate "Other" PRs
+			const top10Total = prStats.reduce((sum, s) => sum + s.count, 0)
+			const otherPRs = total - top10Total
+			const hasOther = otherPRs > 0
+
 			return (
 				<Table>
 					<Table.Header>
@@ -126,7 +146,7 @@ export function Organization() {
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{prStats.slice(0, 5).map((stat) => (
+						{prStats.map((stat) => (
 							<Table.Row key={stat.author}>
 								<Table.Cell className="font-medium">{stat.author}</Table.Cell>
 								<Table.Cell className="text-right text-[var(--accent)]">
@@ -137,10 +157,26 @@ export function Organization() {
 								</Table.Cell>
 							</Table.Row>
 						))}
+						{hasOther && (
+							<Table.Row>
+								<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">
+									{otherPRs}
+								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">
+									—
+								</Table.Cell>
+							</Table.Row>
+						)}
 					</Table.Body>
 				</Table>
 			)
 		}
+
+		// Calculate "Other" issues
+		const top10Total = issueStats.reduce((sum, s) => sum + s.opened, 0)
+		const otherIssues = total - top10Total
+		const hasOther = otherIssues > 0
 
 		return (
 			<Table>
@@ -152,7 +188,7 @@ export function Organization() {
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{issueStats.slice(0, 5).map((stat) => (
+					{issueStats.map((stat) => (
 						<Table.Row key={stat.author}>
 							<Table.Cell className="font-medium">{stat.author}</Table.Cell>
 							<Table.Cell className="text-right text-[var(--accent)]">
@@ -163,6 +199,17 @@ export function Organization() {
 							</Table.Cell>
 						</Table.Row>
 					))}
+					{hasOther && (
+						<Table.Row>
+							<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
+							<Table.Cell className="text-right text-[var(--muted)]">
+								{otherIssues}
+							</Table.Cell>
+							<Table.Cell className="text-right text-[var(--muted)]">
+								—
+							</Table.Cell>
+						</Table.Row>
+					)}
 				</Table.Body>
 			</Table>
 		)
