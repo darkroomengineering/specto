@@ -16,6 +16,16 @@ interface LicenseResponse {
 	error?: string
 }
 
+const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+	return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse<LicenseResponse>> {
 	try {
 		const body = await request.json().catch(() => null)
@@ -24,7 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 		if (!body || typeof body !== 'object' || typeof body.licenseKey !== 'string') {
 			return NextResponse.json(
 				{ valid: false, isPro: false, expiresAt: null, error: 'Invalid request body' },
-				{ status: 400 }
+				{ status: 400, headers: corsHeaders }
 			)
 		}
 
@@ -33,7 +43,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 		if (!licenseKey) {
 			return NextResponse.json(
 				{ valid: false, isPro: false, expiresAt: null, error: 'License key required' },
-				{ status: 400 }
+				{ status: 400, headers: corsHeaders }
 			)
 		}
 
@@ -43,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 				valid: true,
 				isPro: true,
 				expiresAt: null, // Never expires
-			})
+			}, { headers: corsHeaders })
 		}
 
 		// Validate against Polar API (server-side, can't be bypassed)
@@ -65,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 			const errorData = await response.json().catch(() => ({}))
 			return NextResponse.json(
 				{ valid: false, isPro: false, expiresAt: null, error: errorData.detail || 'Invalid license key' },
-				{ status: 200 } // Return 200 with valid: false, not 4xx
+				{ status: 200, headers: corsHeaders } // Return 200 with valid: false, not 4xx
 			)
 		}
 
@@ -80,7 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 				valid: true,
 				isPro: true,
 				expiresAt,
-			})
+			}, { headers: corsHeaders })
 		}
 
 		return NextResponse.json({
@@ -88,12 +98,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 			isPro: false,
 			expiresAt,
 			error: isExpired ? 'License has expired' : 'Invalid license key',
-		})
+		}, { headers: corsHeaders })
 	} catch (error) {
 		console.error('License validation error:', error)
 		return NextResponse.json(
 			{ valid: false, isPro: false, expiresAt: null, error: 'Validation service unavailable' },
-			{ status: 500 }
+			{ status: 500, headers: corsHeaders }
 		)
 	}
 }
