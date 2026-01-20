@@ -44,12 +44,12 @@ export default async function Home() {
 							Live rankings updated every hour
 						</div>
 						<h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[var(--foreground)] mb-4 sm:mb-6 leading-tight">
-							Where does your org<br />
-							<span className="text-[var(--accent)]">rank globally?</span>
+							Organization-wide<br />
+							<span className="text-[var(--accent)]">GitHub Analytics</span>
 						</h1>
 						<p className="text-base sm:text-xl text-[var(--muted)] max-w-2xl mx-auto mb-6 sm:mb-8">
-							Track commits, contributors, and PRs. Compete on the global leaderboard.
-							See how your engineering team stacks up against the best.
+							GitHub only shows per-repository insights. Specto gives you the full picture—aggregate
+							commits, contributors, and activity across your entire organization.
 						</p>
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
 							<Link href="/downloads" className="w-full sm:w-auto">
@@ -69,13 +69,104 @@ export default async function Home() {
 								</Button>
 							</Link>
 						</div>
-						<p className="text-xs text-[var(--muted)]">
+						<p className="text-xs text-[var(--muted)] mb-4">
 							Also available as <code className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">npx specto-cli</code>
 						</p>
+						<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-500">
+							<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+							</svg>
+							100% local — uses your GitHub CLI auth, data never leaves your machine
+						</div>
 					</div>
 
 					{/* Hero Leaderboard Preview */}
 					<HeroLeaderboard initialData={leaderboardData} initialCategory="developer-favorites" />
+				</div>
+			</section>
+
+			{/* Why Specto */}
+			<section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-[var(--border)]">
+				<div className="max-w-4xl mx-auto">
+					<div className="text-center mb-12">
+						<h2 className="text-3xl sm:text-4xl font-bold mb-4">GitHub's blind spot</h2>
+						<p className="text-[var(--muted)] max-w-2xl mx-auto">
+							GitHub Insights only works at the repository level. There's no way to see organization-wide metrics—until now.
+						</p>
+					</div>
+
+					<div className="grid sm:grid-cols-2 gap-6 mb-12">
+						<div className="p-6 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+							<div className="flex items-center gap-2 mb-4">
+								<svg className="w-5 h-5 text-[var(--muted)]" fill="currentColor" viewBox="0 0 24 24">
+									<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+								</svg>
+								<h3 className="font-semibold">GitHub Insights</h3>
+							</div>
+							<ul className="space-y-2 text-sm text-[var(--muted)]">
+								<li className="flex items-start gap-2">
+									<span className="text-red-500 mt-0.5">✗</span>
+									Per-repository only
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-red-500 mt-0.5">✗</span>
+									No org-wide aggregation
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-red-500 mt-0.5">✗</span>
+									Can't compare contributors across repos
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-red-500 mt-0.5">✗</span>
+									Limited to 90 days
+								</li>
+							</ul>
+						</div>
+
+						<div className="p-6 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/5">
+							<div className="flex items-center gap-2 mb-4">
+								<div className="w-5 h-5 rounded bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">S</div>
+								<h3 className="font-semibold">Specto</h3>
+							</div>
+							<ul className="space-y-2 text-sm text-[var(--muted)]">
+								<li className="flex items-start gap-2">
+									<span className="text-emerald-500 mt-0.5">✓</span>
+									<span><strong className="text-[var(--foreground)]">Organization-wide</strong> analytics</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-emerald-500 mt-0.5">✓</span>
+									Aggregate all repos automatically
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-emerald-500 mt-0.5">✓</span>
+									Cross-repo contributor rankings
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="text-emerald-500 mt-0.5">✓</span>
+									Unlimited history with Pro
+								</li>
+							</ul>
+						</div>
+					</div>
+
+					{/* Privacy callout */}
+					<div className="p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+						<div className="flex flex-col sm:flex-row items-start gap-4">
+							<div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+								<svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+								</svg>
+							</div>
+							<div>
+								<h3 className="font-semibold text-emerald-500 mb-1">Your data stays on your machine</h3>
+								<p className="text-sm text-[var(--muted)]">
+									Specto uses your local <code className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)] text-xs">gh</code> (GitHub CLI) authentication.
+									Your private repository data is fetched directly from GitHub to your computer—<strong className="text-[var(--foreground)]">nothing is ever sent to Specto servers</strong>.
+									We can't see your code, commits, or organization data.
+								</p>
+							</div>
+						</div>
+					</div>
 				</div>
 			</section>
 
@@ -144,8 +235,10 @@ export default async function Home() {
 			<section id="app" className="py-16 sm:py-24 px-4 sm:px-6 bg-[var(--card)] border-t border-[var(--border)]">
 				<div className="max-w-6xl mx-auto">
 					<div className="text-center mb-8 sm:mb-16">
-						<h2 className="text-3xl sm:text-4xl font-bold mb-4">Powerful Desktop App</h2>
-						<p className="text-[var(--muted)]">Deep insights into any GitHub organization</p>
+						<h2 className="text-3xl sm:text-4xl font-bold mb-4">Org-Wide Analysis</h2>
+						<p className="text-[var(--muted)] max-w-xl mx-auto">
+							See what GitHub can't show you—aggregated metrics across all repositories, teams, and contributors in your organization.
+						</p>
 					</div>
 
 					{/* Desktop App Mockup */}
