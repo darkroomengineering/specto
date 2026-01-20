@@ -1,6 +1,6 @@
 [package]
 name = "specto-desktop"
-version = "1.1.2"
+version = "1.1.3"
 description = "GitHub organization metrics dashboard"
 authors = ["Specto"]
 license = "MIT"
