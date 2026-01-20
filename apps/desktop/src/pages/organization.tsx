@@ -6,7 +6,7 @@ import { save } from '@tauri-apps/plugin-dialog'
 import { writeTextFile } from '@tauri-apps/plugin-fs'
 import { open } from '@tauri-apps/plugin-shell'
 import { useGitHubStore, type Timeframe, type MetricType } from '../stores/github'
-import { useProFeature, exportData } from '../stores/license'
+import { useProFeature } from '../stores/license'
 import { Spinner } from '../components/spinner'
 
 const metricOptions = [
@@ -66,24 +66,14 @@ export function Organization() {
 		setIsExporting(true)
 		setShowExportMenu(false)
 
-		const result = await exportData(format, {
-			organization: orgName,
-			metrics: {
-				commits: totalCommits,
-				pullRequests: totalPRs,
-				issues: totalIssues,
-				contributors: commitStats.length,
-				repositories: repos.length,
-				stars: info?.public_repos || 0,
-			},
-			period: getTimeframeLabel(timeframe),
-		})
+		try {
+			const period = getTimeframeLabel(timeframe)
+			const exportContent = format === 'json'
+				? generateJSONExport()
+				: generateCSVExport()
 
-		setIsExporting(false)
-
-		if (result.success && result.blob) {
 			// Show save dialog
-			const defaultFilename = result.filename || `specto-${orgName}-export.${format}`
+			const defaultFilename = `specto-${orgName}-${timeframe}.${format}`
 			const filePath = await save({
 				defaultPath: defaultFilename,
 				filters: format === 'csv'
@@ -92,19 +82,20 @@ export function Organization() {
 			})
 
 			if (filePath) {
-				// Write the file
-				const content = await result.blob.text()
-				await writeTextFile(filePath, content)
+				await writeTextFile(filePath, exportContent)
 
 				// Get the folder path for "Show in Finder"
 				const folderPath = filePath.substring(0, filePath.lastIndexOf('/'))
 
 				toast.success(
-					<div className="flex flex-col gap-2">
-						<span>Export saved successfully</span>
-						<span className="text-xs opacity-80 truncate max-w-[250px]">{filePath}</span>
+					<div className="flex flex-col gap-1">
+						<span>Export saved</span>
 						<button
-							onClick={() => open(folderPath)}
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation()
+								open(folderPath)
+							}}
 							className="text-xs underline text-left hover:opacity-80"
 						>
 							Show in Finder
@@ -113,9 +104,100 @@ export function Organization() {
 					{ duration: 5000 }
 				)
 			}
-		} else {
-			toast.error(result.error || 'Export failed')
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Export failed')
+		} finally {
+			setIsExporting(false)
 		}
+	}
+
+	const generateJSONExport = () => {
+		const period = getTimeframeLabel(timeframe)
+		const data = {
+			organization: {
+				name: orgName,
+				description: info?.description || null,
+				publicRepos: info?.public_repos || repos.length,
+				members: members.length,
+				teams: teams.length,
+			},
+			period,
+			exportedAt: new Date().toISOString(),
+			summary: {
+				totalCommits,
+				totalPullRequests: totalPRs,
+				totalIssues,
+				activeContributors: commitStats.length,
+			},
+			topContributorsByCommits: commitStats.map(s => ({
+				author: s.author,
+				commits: s.count,
+			})),
+			topContributorsByPRs: prStats.map(s => ({
+				author: s.author,
+				pullRequests: s.count,
+				merged: s.merged,
+			})),
+			topContributorsByIssues: issueStats.map(s => ({
+				author: s.author,
+				opened: s.opened,
+				closed: s.closed,
+			})),
+			teams: teams.slice(0, 10).map(t => ({
+				name: t.name,
+				privacy: t.privacy,
+				membersCount: t.members_count,
+			})),
+		}
+		return JSON.stringify(data, null, 2)
+	}
+
+	const generateCSVExport = () => {
+		const period = getTimeframeLabel(timeframe)
+		const lines: string[] = []
+
+		// Header info
+		lines.push('Specto Export')
+		lines.push(`Organization,${orgName}`)
+		lines.push(`Period,${period}`)
+		lines.push(`Exported At,${new Date().toISOString()}`)
+		lines.push('')
+
+		// Summary
+		lines.push('Summary')
+		lines.push(`Total Commits,${totalCommits}`)
+		lines.push(`Total Pull Requests,${totalPRs}`)
+		lines.push(`Total Issues,${totalIssues}`)
+		lines.push(`Active Contributors,${commitStats.length}`)
+		lines.push(`Repositories,${repos.length}`)
+		lines.push(`Members,${members.length}`)
+		lines.push(`Teams,${teams.length}`)
+		lines.push('')
+
+		// Top contributors by commits
+		lines.push('Top Contributors by Commits')
+		lines.push('Author,Commits')
+		for (const s of commitStats) {
+			lines.push(`${s.author},${s.count}`)
+		}
+		lines.push('')
+
+		// Top contributors by PRs
+		lines.push('Top Contributors by Pull Requests')
+		lines.push('Author,PRs,Merged')
+		for (const s of prStats) {
+			lines.push(`${s.author},${s.count},${s.merged}`)
+		}
+		lines.push('')
+
+		// Top contributors by issues
+		lines.push('Top Contributors by Issues')
+		lines.push('Author,Opened,Closed')
+		for (const s of issueStats) {
+			lines.push(`${s.author},${s.opened},${s.closed}`)
+		}
+
+		return lines.join('\n')
 	}
 
 	const getTimeframeLabel = (tf: Timeframe) => {
