@@ -10,9 +10,17 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./browser": {
+      "import": "./dist/browser.js",
+      "types": "./dist/browser.d.ts"
+    },
     "./github": {
       "import": "./dist/github/index.js",
       "types": "./dist/github/index.d.ts"
+    },
+    "./cache": {
+      "import": "./dist/cache/index.js",
+      "types": "./dist/cache/index.d.ts"
     },
     "./utils": {
       "import": "./dist/utils/index.js",
