@@ -2,6 +2,7 @@ import { Card, Stat } from '@specto/ui'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
+import { useProFeature, FREE_LIMITS } from '../stores/license'
 import { Spinner } from '../components/spinner'
 
 interface UserStats {
@@ -19,6 +20,7 @@ export function Dashboard() {
 	const [isLoading, setIsLoading] = useState(true)
 	const navigate = useNavigate()
 	const { username, getToken } = useAuthStore()
+	const { isPro } = useProFeature()
 
 	useEffect(() => {
 		async function fetchUserStats() {
@@ -150,7 +152,29 @@ export function Dashboard() {
 			{userStats && userStats.orgs.length > 0 && (
 				<Card className="mb-8">
 					<Card.Header>
-						<h2 className="text-lg font-medium">Your Organizations</h2>
+						<div className="flex items-center justify-between">
+							<h2 className="text-lg font-medium">Your Organizations</h2>
+							<span className="text-xs text-[var(--muted)]">
+								{isPro ? (
+									<span className="text-[var(--accent)]">Unlimited</span>
+								) : (
+									<>
+										<span className={userStats.orgs.length >= FREE_LIMITS.maxOrganizations ? 'text-[var(--color-warning)]' : ''}>
+											{userStats.orgs.length}
+										</span>
+										<span> / {FREE_LIMITS.maxOrganizations}</span>
+										{userStats.orgs.length >= FREE_LIMITS.maxOrganizations && (
+											<button
+												onClick={() => navigate('/settings')}
+												className="ml-2 text-[var(--accent)] hover:underline"
+											>
+												Upgrade
+											</button>
+										)}
+									</>
+								)}
+							</span>
+						</div>
 					</Card.Header>
 					<Card.Content>
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

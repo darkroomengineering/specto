@@ -1,16 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Stat, Table, Badge, Button, Select } from '@specto/ui'
 import { useGitHubStore, type Timeframe, type MetricType } from '../stores/github'
+import { useProFeature, exportData } from '../stores/license'
 import { Spinner } from '../components/spinner'
-
-const timeframeOptions = [
-	{ value: '7d', label: 'Last 7 days' },
-	{ value: '30d', label: 'Last 30 days' },
-	{ value: '90d', label: 'Last 90 days' },
-	{ value: 'ytd', label: 'Year to date' },
-	{ value: 'all', label: 'All time' },
-]
 
 const metricOptions = [
 	{ value: 'commits', label: 'Commits' },
@@ -19,6 +12,19 @@ const metricOptions = [
 ]
 
 export function Organization() {
+	const { isPro, canExport } = useProFeature()
+	const [isExporting, setIsExporting] = useState(false)
+	const [exportError, setExportError] = useState<string | null>(null)
+	const [showExportMenu, setShowExportMenu] = useState(false)
+
+	// Timeframe options with Pro gating
+	const timeframeOptions = [
+		{ value: '7d', label: 'Last 7 days' },
+		{ value: '30d', label: 'Last 30 days' },
+		{ value: '90d', label: isPro ? 'Last 90 days' : '🔒 Last 90 days', disabled: !isPro },
+		{ value: 'ytd', label: isPro ? 'Year to date' : '🔒 Year to date', disabled: !isPro },
+		{ value: 'all', label: isPro ? 'All time' : '🔒 All time', disabled: !isPro },
+	]
 	const { orgName } = useParams<{ orgName: string }>()
 	const navigate = useNavigate()
 	const {
@@ -47,6 +53,46 @@ export function Organization() {
 	}, [currentOrg, fetchAll])
 
 	const { info, members, teams, commitStats, prStats, issueStats, repos, totalCommits, totalPRs, totalIssues } = orgData
+
+	const handleExport = async (format: 'csv' | 'json') => {
+		if (!canExport || !orgName) {
+			navigate('/settings')
+			return
+		}
+
+		setIsExporting(true)
+		setExportError(null)
+		setShowExportMenu(false)
+
+		const result = await exportData(format, {
+			organization: orgName,
+			metrics: {
+				commits: totalCommits,
+				pullRequests: totalPRs,
+				issues: totalIssues,
+				contributors: commitStats.length,
+				repositories: repos.length,
+				stars: info?.public_repos || 0,
+			},
+			period: getTimeframeLabel(timeframe),
+		})
+
+		setIsExporting(false)
+
+		if (result.success && result.blob) {
+			// Download the file
+			const url = URL.createObjectURL(result.blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = result.filename || `specto-export.${format}`
+			document.body.appendChild(a)
+			a.click()
+			document.body.removeChild(a)
+			URL.revokeObjectURL(url)
+		} else {
+			setExportError(result.error || 'Export failed')
+		}
+	}
 
 	const getTimeframeLabel = (tf: Timeframe) => {
 		switch (tf) {
@@ -253,6 +299,39 @@ export function Organization() {
 						options={metricOptions}
 						size="sm"
 					/>
+					<div className="relative">
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => canExport ? setShowExportMenu(!showExportMenu) : navigate('/settings')}
+							disabled={isExporting}
+						>
+							{isExporting ? (
+								<Spinner size="sm" />
+							) : (
+								<>
+									{!canExport && <span className="mr-1">🔒</span>}
+									Export
+								</>
+							)}
+						</Button>
+						{showExportMenu && canExport && (
+							<div className="absolute right-0 top-full mt-1 py-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg z-10 min-w-[120px]">
+								<button
+									className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
+									onClick={() => handleExport('csv')}
+								>
+									Export CSV
+								</button>
+								<button
+									className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
+									onClick={() => handleExport('json')}
+								>
+									Export JSON
+								</button>
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 
@@ -263,6 +342,18 @@ export function Organization() {
 						<p className="text-[var(--color-error)] text-sm">{error}</p>
 						<Button variant="secondary" size="sm" className="mt-2" onClick={fetchAll}>
 							Retry
+						</Button>
+					</Card.Content>
+				</Card>
+			)}
+
+			{/* Export error */}
+			{exportError && (
+				<Card className="mb-6 border-[var(--color-error)]">
+					<Card.Content>
+						<p className="text-[var(--color-error)] text-sm">{exportError}</p>
+						<Button variant="secondary" size="sm" className="mt-2" onClick={() => setExportError(null)}>
+							Dismiss
 						</Button>
 					</Card.Content>
 				</Card>
