@@ -4,15 +4,15 @@ export const GITHUB_REPO = 'darkroomengineering/specto'
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`
 
 // Asset filename patterns to match in releases
-// New naming: Specto-{arch}.{ext} (no version in filename)
+// Supports both old (Specto_1.2.3_arch.ext) and new (Specto-arch.ext) naming
 export const ASSET_PATTERNS = {
 	macos: {
-		arm64: /^Specto-aarch64\.dmg$/i,
-		x64: /^Specto-x64\.dmg$/i,
+		arm64: /Specto[-_].*aarch64\.dmg$/i,
+		x64: /Specto[-_].*x64\.dmg$/i,
 	},
 	windows: {
-		exe: /^Specto-x64-setup\.exe$/i,
-		msi: /^Specto-x64\.msi$/i,
+		exe: /Specto[-_].*x64[-_]setup\.exe$/i,
+		msi: /Specto[-_].*x64.*\.msi$/i,
 	},
 } as const
 

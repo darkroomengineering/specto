@@ -115,83 +115,49 @@ jobs:
       - name: Rename assets and create latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          ASSETS=/tmp/assets
 
-          mkdir -p /tmp/assets /tmp/sigs
+          mkdir -p $ASSETS
 
           # Download all release assets
-          gh release download "v${VERSION}" -D /tmp/assets || true
+          gh release download "v${VERSION}" -D $ASSETS || true
 
-          # Rename files to remove version
-          cd /tmp/assets
+          # Helper function to rename and re-upload asset
+          rename_asset() {
+            local old_name="$1"
+            local new_name="$2"
+            if [ -f "$ASSETS/$old_name" ]; then
+              mv "$ASSETS/$old_name" "$ASSETS/$new_name"
+              gh release upload "v${VERSION}" "$ASSETS/$new_name" --clobber
+              gh release delete-asset "v${VERSION}" "$old_name" --yes || true
+            fi
+          }
 
-          # macOS ARM
-          if [ -f "Specto_${VERSION}_aarch64.dmg" ]; then
-            mv "Specto_${VERSION}_aarch64.dmg" "Specto-aarch64.dmg"
-            gh release upload "v${VERSION}" "Specto-aarch64.dmg" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_aarch64.dmg" --yes || true
-          fi
-          if [ -f "Specto_${VERSION}_aarch64.dmg.sig" ]; then
-            mv "Specto_${VERSION}_aarch64.dmg.sig" "Specto-aarch64.dmg.sig"
-            gh release upload "v${VERSION}" "Specto-aarch64.dmg.sig" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_aarch64.dmg.sig" --yes || true
-          fi
-
-          # macOS Intel
-          if [ -f "Specto_${VERSION}_x64.dmg" ]; then
-            mv "Specto_${VERSION}_x64.dmg" "Specto-x64.dmg"
-            gh release upload "v${VERSION}" "Specto-x64.dmg" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64.dmg" --yes || true
-          fi
-          if [ -f "Specto_${VERSION}_x64.dmg.sig" ]; then
-            mv "Specto_${VERSION}_x64.dmg.sig" "Specto-x64.dmg.sig"
-            gh release upload "v${VERSION}" "Specto-x64.dmg.sig" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64.dmg.sig" --yes || true
-          fi
-
-          # Windows EXE
-          if [ -f "Specto_${VERSION}_x64-setup.exe" ]; then
-            mv "Specto_${VERSION}_x64-setup.exe" "Specto-x64-setup.exe"
-            gh release upload "v${VERSION}" "Specto-x64-setup.exe" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64-setup.exe" --yes || true
-          fi
-          if [ -f "Specto_${VERSION}_x64-setup.exe.sig" ]; then
-            mv "Specto_${VERSION}_x64-setup.exe.sig" "Specto-x64-setup.exe.sig"
-            gh release upload "v${VERSION}" "Specto-x64-setup.exe.sig" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64-setup.exe.sig" --yes || true
-          fi
-
-          # Windows MSI
-          if [ -f "Specto_${VERSION}_x64_en-US.msi" ]; then
-            mv "Specto_${VERSION}_x64_en-US.msi" "Specto-x64.msi"
-            gh release upload "v${VERSION}" "Specto-x64.msi" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64_en-US.msi" --yes || true
-          fi
-          if [ -f "Specto_${VERSION}_x64_en-US.msi.sig" ]; then
-            mv "Specto_${VERSION}_x64_en-US.msi.sig" "Specto-x64.msi.sig"
-            gh release upload "v${VERSION}" "Specto-x64.msi.sig" --clobber
-            gh release delete-asset "v${VERSION}" "Specto_${VERSION}_x64_en-US.msi.sig" --yes || true
-          fi
+          # Rename all assets
+          rename_asset "Specto_${VERSION}_aarch64.dmg" "Specto-aarch64.dmg"
+          rename_asset "Specto_${VERSION}_aarch64.dmg.sig" "Specto-aarch64.dmg.sig"
+          rename_asset "Specto_${VERSION}_x64.dmg" "Specto-x64.dmg"
+          rename_asset "Specto_${VERSION}_x64.dmg.sig" "Specto-x64.dmg.sig"
+          rename_asset "Specto_${VERSION}_x64-setup.exe" "Specto-x64-setup.exe"
+          rename_asset "Specto_${VERSION}_x64-setup.exe.sig" "Specto-x64-setup.exe.sig"
+          rename_asset "Specto_${VERSION}_x64_en-US.msi" "Specto-x64.msi"
+          rename_asset "Specto_${VERSION}_x64_en-US.msi.sig" "Specto-x64.msi.sig"
 
           # Read signatures for latest.json
           DARWIN_AARCH64_SIG=""
           DARWIN_X64_SIG=""
           WINDOWS_SIG=""
 
-          if [ -f "Specto-aarch64.dmg.sig" ]; then
-            DARWIN_AARCH64_SIG=$(cat "Specto-aarch64.dmg.sig")
-          fi
-          if [ -f "Specto-x64.dmg.sig" ]; then
-            DARWIN_X64_SIG=$(cat "Specto-x64.dmg.sig")
-          fi
-          if [ -f "Specto-x64-setup.exe.sig" ]; then
-            WINDOWS_SIG=$(cat "Specto-x64-setup.exe.sig")
-          fi
+          [ -f "$ASSETS/Specto-aarch64.dmg.sig" ] && DARWIN_AARCH64_SIG=$(cat "$ASSETS/Specto-aarch64.dmg.sig")
+          [ -f "$ASSETS/Specto-x64.dmg.sig" ] && DARWIN_X64_SIG=$(cat "$ASSETS/Specto-x64.dmg.sig")
+          [ -f "$ASSETS/Specto-x64-setup.exe.sig" ] && WINDOWS_SIG=$(cat "$ASSETS/Specto-x64-setup.exe.sig")
 
-          # Create latest.json (URLs without version in filename)
-          cat > latest.json << EOF
+          # Create latest.json
+          cat > $ASSETS/latest.json << EOF
           {
             "version": "${VERSION}",
             "notes": "See release notes at https://github.com/darkroomengineering/specto/releases/tag/v${VERSION}",
@@ -213,5 +179,5 @@ jobs:
           }
           EOF
 
-          cat latest.json
-          gh release upload "v${VERSION}" latest.json --clobber
+          cat $ASSETS/latest.json
+          gh release upload "v${VERSION}" $ASSETS/latest.json --clobber
