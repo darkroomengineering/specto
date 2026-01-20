@@ -281,7 +281,7 @@ export function Settings() {
 									</Button>
 								</div>
 							) : (
-								<div className="space-y-4">
+								<div className="space-y-6">
 									{/* Pricing */}
 									<div className="flex items-baseline gap-1">
 										<span className="text-3xl font-bold">$8</span>
@@ -289,8 +289,8 @@ export function Settings() {
 									</div>
 
 									{/* License key input */}
-									<div>
-										<label className="block text-sm font-medium mb-2">
+									<div className="space-y-3">
+										<label className="block text-sm font-medium">
 											Enter license key
 										</label>
 										<div className="flex gap-2">
@@ -298,8 +298,8 @@ export function Settings() {
 												type="text"
 												value={keyInput}
 												onChange={(e) => setKeyInput(e.target.value)}
-												placeholder="SPECTO_XXXX-XXXX-XXXX"
-												className="flex-1 px-3 py-2 text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+												placeholder="XXXX-XXXX-XXXX-XXXX"
+												className="flex-1 px-3 py-2.5 text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
 											/>
 											<Button
 												onClick={() => {
@@ -313,22 +313,19 @@ export function Settings() {
 												{isValidating ? <Spinner size="sm" /> : 'Activate'}
 											</Button>
 										</div>
+										{licenseError && (
+											<div className="py-2.5 px-3 rounded-md bg-[var(--color-error)]/10 border border-[var(--color-error)]/20">
+												<p className="text-sm text-[var(--color-error)]">{licenseError}</p>
+											</div>
+										)}
 									</div>
 
-									{licenseError && (
-										<div className="py-2 px-3 rounded-md bg-[var(--color-error)]/10 border border-[var(--color-error)]/20">
-											<p className="text-sm text-[var(--color-error)]">{licenseError}</p>
-										</div>
-									)}
-
-									<div className="pt-2">
-										<Button
-											className="w-full"
-											onClick={() => open('https://specto.dev/downloads')}
-										>
-											Get Specto Pro
-										</Button>
-									</div>
+									<Button
+										className="w-full"
+										onClick={() => open('https://specto.dev/downloads')}
+									>
+										Get Specto Pro
+									</Button>
 								</div>
 							)}
 						</Card.Content>
