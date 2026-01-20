@@ -5,6 +5,16 @@ const POLAR_ORG_ID = 'darkroomengineering'
 // Master license key (set in environment, never expires)
 const MASTER_LICENSE_KEY = process.env.MASTER_LICENSE_KEY
 
+const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+	return NextResponse.json({}, { headers: corsHeaders })
+}
+
 interface ExportRequest {
 	licenseKey: string
 	format: 'csv' | 'json'
@@ -81,7 +91,7 @@ export async function POST(request: NextRequest) {
 		if (!licenseKey) {
 			return NextResponse.json(
 				{ error: 'License key required for export' },
-				{ status: 401 }
+				{ status: 401, headers: corsHeaders }
 			)
 		}
 
@@ -89,7 +99,7 @@ export async function POST(request: NextRequest) {
 		if (!isValid) {
 			return NextResponse.json(
 				{ error: 'Valid Pro license required for export' },
-				{ status: 403 }
+				{ status: 403, headers: corsHeaders }
 			)
 		}
 
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
 			const csv = generateCSV(data)
 			return new NextResponse(csv, {
 				headers: {
+					...corsHeaders,
 					'Content-Type': 'text/csv',
 					'Content-Disposition': `attachment; filename="specto-${data.organization}-${Date.now()}.csv"`,
 				},
@@ -107,6 +118,7 @@ export async function POST(request: NextRequest) {
 		// JSON format
 		return NextResponse.json(data, {
 			headers: {
+				...corsHeaders,
 				'Content-Disposition': `attachment; filename="specto-${data.organization}-${Date.now()}.json"`,
 			},
 		})
@@ -114,7 +126,7 @@ export async function POST(request: NextRequest) {
 		console.error('Export error:', error)
 		return NextResponse.json(
 			{ error: 'Export failed' },
-			{ status: 500 }
+			{ status: 500, headers: corsHeaders }
 		)
 	}
 }
