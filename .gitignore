@@ -40,3 +40,4 @@ coverage/
 
 # Bun
 bun.lock
+.claude/
