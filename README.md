@@ -12,24 +12,24 @@ npx specto-cli your-org
 
 ### Desktop App
 
-Download from [Releases](https://github.com/darkroomengineering/specto/releases) or visit [specto.dev](https://specto.dev).
+Download from [Releases](https://github.com/darkroomengineering/specto/releases) or visit [specto.darkroom.engineering](https://specto.darkroom.engineering).
 
 ## Monorepo Structure
 
 ### Apps
 
-| App | Description | Stack |
-|-----|-------------|-------|
-| `apps/desktop` | Native desktop app | Tauri 2, React 19, Vite 7 |
-| `apps/web` | Marketing website | Next.js 16, React 19 |
-| `apps/cli` | CLI tool (`specto-cli` on npm) | Bun, Commander |
+| App            | Description                    | Stack                     |
+| -------------- | ------------------------------ | ------------------------- |
+| `apps/desktop` | Native desktop app             | Tauri 2, React 19, Vite 7 |
+| `apps/web`     | Marketing website              | Next.js 16, React 19      |
+| `apps/cli`     | CLI tool (`specto-cli` on npm) | Bun, Commander            |
 
 ### Packages
 
-| Package | Description |
-|---------|-------------|
+| Package        | Description                    |
+| -------------- | ------------------------------ |
 | `@specto/core` | Shared types and GitHub client |
-| `@specto/ui` | Shared React components |
+| `@specto/ui`   | Shared React components        |
 
 ## Development
 

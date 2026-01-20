@@ -2,7 +2,7 @@
 // This ensures consistency between web and desktop apps
 
 const API_BASE = import.meta.env.PROD
-	? 'https://specto.dev'
+	? 'https://specto.darkroom.engineering'
 	: 'http://localhost:3000'
 
 export type LeaderboardCategory =

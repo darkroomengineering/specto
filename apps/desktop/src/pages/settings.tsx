@@ -221,7 +221,7 @@ export function Settings() {
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={() => open('https://specto.dev')}
+									onClick={() => open('https://specto.darkroom.engineering')}
 								>
 									Website
 								</Button>
@@ -322,7 +322,7 @@ export function Settings() {
 
 									<Button
 										className="w-full"
-										onClick={() => open('https://specto.dev/downloads')}
+										onClick={() => open('https://specto.darkroom.engineering/downloads')}
 									>
 										Get Specto Pro
 									</Button>
