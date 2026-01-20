@@ -20,6 +20,10 @@ export function App() {
 						border: '1px solid var(--border)',
 						color: 'var(--foreground)',
 					},
+					classNames: {
+						error: '!bg-[var(--color-error)] !text-white !border-[var(--color-error)]',
+						success: '!bg-[var(--color-success)] !text-white !border-[var(--color-success)]',
+					},
 				}}
 			/>
 			<Updater />
