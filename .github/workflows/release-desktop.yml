@@ -1,0 +1,154 @@
+name: Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Install Rust target (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
+            rustup target add aarch64-apple-darwin
+          else
+            rustup target add x86_64-apple-darwin
+          fi
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Sync version
+        working-directory: apps/desktop
+        run: node scripts/sync-version.js
+
+      - name: Build and Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: v__VERSION__
+          releaseName: Specto v__VERSION__
+          releaseBody: |
+            See the release notes for details.
+
+            ## Downloads
+            - **macOS (Apple Silicon)**: Specto___VERSION___aarch64.dmg
+            - **macOS (Intel)**: Specto___VERSION___x64.dmg
+            - **Windows**: Specto___VERSION___x64-setup.exe
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+          updaterJsonPreferNsis: true
+
+  update-json:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Wait for release assets
+        run: sleep 30
+
+      - name: Download signatures and create latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Download signature files from release
+          gh release download "v${VERSION}" -p "*.sig" -D /tmp/sigs || true
+
+          # Read signatures (if they exist)
+          DARWIN_AARCH64_SIG=""
+          DARWIN_X64_SIG=""
+          WINDOWS_SIG=""
+
+          if [ -f "/tmp/sigs/Specto_${VERSION}_aarch64.dmg.sig" ]; then
+            DARWIN_AARCH64_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_aarch64.dmg.sig")
+          fi
+
+          if [ -f "/tmp/sigs/Specto_${VERSION}_x64.dmg.sig" ]; then
+            DARWIN_X64_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_x64.dmg.sig")
+          fi
+
+          if [ -f "/tmp/sigs/Specto_${VERSION}_x64-setup.exe.sig" ]; then
+            WINDOWS_SIG=$(cat "/tmp/sigs/Specto_${VERSION}_x64-setup.exe.sig")
+          fi
+
+          # Create latest.json
+          cat > latest.json << EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See release notes at https://github.com/darkroomengineering/specto/releases/tag/v${VERSION}",
+            "pub_date": "${RELEASE_DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "${DARWIN_AARCH64_SIG}",
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_aarch64.dmg"
+              },
+              "darwin-x86_64": {
+                "signature": "${DARWIN_X64_SIG}",
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_x64.dmg"
+              },
+              "windows-x86_64": {
+                "signature": "${WINDOWS_SIG}",
+                "url": "https://github.com/darkroomengineering/specto/releases/download/v${VERSION}/Specto_${VERSION}_x64-setup.exe"
+              }
+            }
+          }
+          EOF
+
+          cat latest.json
+
+      - name: Upload latest.json to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          gh release upload "v${VERSION}" latest.json --clobber
