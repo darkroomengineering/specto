@@ -1,6 +1,6 @@
 {
   "name": "@specto/desktop",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "private": true,
   "description": "Specto Desktop - GitHub organization metrics dashboard",
   "type": "module",
@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "node scripts/sync-version.js && tauri build",
+    "version:sync": "node scripts/sync-version.js"
   },
   "dependencies": {
     "@specto/core": "workspace:*",
