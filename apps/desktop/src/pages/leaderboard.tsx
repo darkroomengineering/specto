@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, Badge } from '@specto/ui'
 import { useAuthStore } from '../stores/auth'
 import { Spinner } from '../components/spinner'
@@ -59,9 +59,31 @@ function RankBadge({ rank }: { rank: number }) {
 
 function ActivityScoreHint() {
 	const [isOpen, setIsOpen] = useState(false)
+	const containerRef = useRef<HTMLDivElement>(null)
+
+	// Close on click outside
+	useEffect(() => {
+		if (!isOpen) return
+
+		function handleClickOutside(event: MouseEvent) {
+			if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+				setIsOpen(false)
+			}
+		}
+
+		// Add listener on next tick to avoid immediate close from the opening click
+		const timeoutId = setTimeout(() => {
+			document.addEventListener('click', handleClickOutside)
+		}, 0)
+
+		return () => {
+			clearTimeout(timeoutId)
+			document.removeEventListener('click', handleClickOutside)
+		}
+	}, [isOpen])
 
 	return (
-		<div className="relative">
+		<div className="relative" ref={containerRef}>
 			<button
 				onClick={() => setIsOpen(!isOpen)}
 				className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
