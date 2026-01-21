@@ -273,6 +273,7 @@ export function Leaderboard() {
 										<img
 											src={`${org.avatarUrl}?s=80`}
 											alt={org.name}
+											loading="lazy"
 											className="w-10 h-10 rounded-lg border border-[var(--border)]"
 										/>
 										<div className="flex-1 min-w-0">
@@ -327,6 +328,7 @@ export function Leaderboard() {
 											<img
 												src={org.avatar_url}
 												alt={org.login}
+												loading="lazy"
 												className="w-10 h-10 rounded-lg border border-[var(--border)]"
 											/>
 											<div className="flex-1 min-w-0">

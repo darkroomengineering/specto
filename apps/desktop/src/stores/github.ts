@@ -23,6 +23,49 @@ const cache = new MemoryCache({
 	staleWhileRevalidate: 60 * 1000, // 1 minute stale-while-revalidate
 })
 
+// Persistent localStorage cache for offline support
+const OFFLINE_CACHE_PREFIX = 'specto:cache:org:'
+
+interface OfflineCacheEntry<T> {
+	data: T
+	timestamp: number
+}
+
+function saveToOfflineCache<T>(orgName: string, data: T): void {
+	try {
+		const entry: OfflineCacheEntry<T> = {
+			data,
+			timestamp: Date.now(),
+		}
+		localStorage.setItem(`${OFFLINE_CACHE_PREFIX}${orgName}`, JSON.stringify(entry))
+	} catch {
+		// localStorage might be full or unavailable
+	}
+}
+
+function loadFromOfflineCache<T>(orgName: string): OfflineCacheEntry<T> | null {
+	try {
+		const stored = localStorage.getItem(`${OFFLINE_CACHE_PREFIX}${orgName}`)
+		if (stored) {
+			return JSON.parse(stored) as OfflineCacheEntry<T>
+		}
+	} catch {
+		// Invalid JSON or localStorage unavailable
+	}
+	return null
+}
+
+function formatCacheAge(timestamp: number): string {
+	const seconds = Math.floor((Date.now() - timestamp) / 1000)
+	if (seconds < 60) return 'just now'
+	const minutes = Math.floor(seconds / 60)
+	if (minutes < 60) return `${minutes}m ago`
+	const hours = Math.floor(minutes / 60)
+	if (hours < 24) return `${hours}h ago`
+	const days = Math.floor(hours / 24)
+	return `${days}d ago`
+}
+
 // Pagination helper - fetches all pages from GitHub API
 async function fetchAllPages<T>(
 	endpoint: string,
@@ -121,6 +164,8 @@ interface GitHubState {
 	error: string | null
 	notFound: boolean
 	suggestions: OrgSuggestion[]
+	cacheAge: string | null // For showing "Last updated X ago" when using cached data
+	isUsingCachedData: boolean
 	setOrg: (org: string) => void
 	setTimeframe: (tf: Timeframe) => void
 	setMetricType: (mt: MetricType) => void
@@ -210,11 +255,16 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 	error: null,
 	notFound: false,
 	suggestions: [],
+	cacheAge: null,
+	isUsingCachedData: false,
 
 	setOrg: (org) => {
+		// Check for offline cached data first
+		const offlineCache = loadFromOfflineCache<OrgData>(org)
+
 		set({
 			currentOrg: org,
-			orgData: {
+			orgData: offlineCache?.data ?? {
 				info: null,
 				members: [],
 				teams: [],
@@ -231,6 +281,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 			error: null,
 			notFound: false,
 			suggestions: [],
+			cacheAge: offlineCache ? formatCacheAge(offlineCache.timestamp) : null,
+			isUsingCachedData: !!offlineCache,
 		})
 	},
 
@@ -653,6 +705,9 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		const { currentOrg, fetchOrgInfo, fetchMembers, fetchTeams, fetchRepos } = get()
 		if (!currentOrg) return
 
+		// Clear cached data flag when fetching fresh data
+		set({ isUsingCachedData: false, cacheAge: null })
+
 		// Phase 1: Fetch org info, members, teams, and repos in parallel
 		// Repos are needed by all stats functions, so fetch them first
 		await Promise.all([fetchOrgInfo(), fetchMembers(), fetchTeams(), fetchRepos()])
@@ -660,6 +715,12 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		// Phase 2: Now fetch all stats in parallel (they'll use cached repos)
 		const { fetchCommitStats, fetchPRStats, fetchIssueStats } = get()
 		await Promise.all([fetchCommitStats(), fetchPRStats(), fetchIssueStats()])
+
+		// Save to offline cache after successful fetch
+		const { orgData, notFound, error } = get()
+		if (!notFound && !error && orgData.info) {
+			saveToOfflineCache(currentOrg, orgData)
+		}
 	},
 
 	// Clear cache for current org (useful for manual refresh)
