@@ -1,9 +1,10 @@
 // API client for fetching leaderboard data from the web API
 // This ensures consistency between web and desktop apps
 
-// Always use production API for leaderboard data
-// This ensures consistent data between web and desktop, and works offline
-const API_BASE = 'https://specto.darkroom.engineering'
+// Use localhost in development, production API in builds
+const API_BASE = import.meta.env.DEV
+	? 'http://localhost:3000'
+	: 'https://specto.darkroom.engineering'
 
 export type LeaderboardCategory =
 	| 'developer-favorites'
