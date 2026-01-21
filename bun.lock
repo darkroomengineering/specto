@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "pondus",
+      "dependencies": {
+        "esbuild": "^0.27.2",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.3.11",
         "turbo": "^2.7.4",
@@ -31,7 +34,7 @@
     },
     "apps/desktop": {
       "name": "@specto/desktop",
-      "version": "1.1.12",
+      "version": "1.2.3",
       "dependencies": {
         "@specto/core": "workspace:*",
         "@specto/ui": "workspace:*",

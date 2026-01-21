@@ -28,9 +28,17 @@ export function Layout() {
 
 	// Load recent orgs from localStorage
 	useEffect(() => {
-		const stored = localStorage.getItem('specto:recent-orgs')
-		if (stored) {
-			setRecentOrgs(JSON.parse(stored))
+		try {
+			const stored = localStorage.getItem('specto:recent-orgs')
+			if (stored) {
+				const parsed = JSON.parse(stored)
+				// Validate the parsed data is an array with expected structure
+				if (Array.isArray(parsed) && parsed.every(item => item && typeof item === 'object' && 'login' in item)) {
+					setRecentOrgs(parsed as RecentOrg[])
+				}
+			}
+		} catch {
+			// Invalid JSON, ignore
 		}
 	}, [])
 

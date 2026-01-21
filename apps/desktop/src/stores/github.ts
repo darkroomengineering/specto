@@ -47,7 +47,12 @@ function loadFromOfflineCache<T>(orgName: string): OfflineCacheEntry<T> | null {
 	try {
 		const stored = localStorage.getItem(`${OFFLINE_CACHE_PREFIX}${orgName}`)
 		if (stored) {
-			return JSON.parse(stored) as OfflineCacheEntry<T>
+			const parsed = JSON.parse(stored)
+			// Validate the parsed data has expected structure
+			if (parsed && typeof parsed === 'object' && 'data' in parsed && 'timestamp' in parsed) {
+				return parsed as OfflineCacheEntry<T>
+			}
+			return null
 		}
 	} catch {
 		// Invalid JSON or localStorage unavailable

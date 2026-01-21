@@ -10,7 +10,10 @@
     "process:allow-restart",
     "process:allow-exit",
     "dialog:allow-save",
-    "fs:allow-write-text-file",
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
     {
       "identifier": "shell:allow-execute",
       "allow": [

@@ -28,7 +28,7 @@ const webhookHandler = Webhooks({
 		console.log('Order paid:', {
 			orderId: payload.data.id,
 			userId: user.id,
-			email: customer.email,
+			hasEmail: !!customer.email,
 			product: product?.name,
 		})
 	},
@@ -150,11 +150,11 @@ const webhookHandler = Webhooks({
 
 // Wrap handler with runtime env validation
 export async function POST(request: NextRequest): Promise<NextResponse> {
-	if (!webhookSecret) {
-		console.error('POLAR_WEBHOOK_SECRET environment variable is not configured')
+	if (!webhookSecret || webhookSecret.length < 32) {
+		console.error('POLAR_WEBHOOK_SECRET is missing or invalid')
 		return NextResponse.json(
 			{ error: 'Webhook not configured' },
-			{ status: 500 }
+			{ status: 503 }
 		)
 	}
 	return webhookHandler(request)

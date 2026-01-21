@@ -16,17 +16,29 @@ interface LicenseResponse {
 	error?: string
 }
 
-const corsHeaders = {
-	'Access-Control-Allow-Origin': '*',
-	'Access-Control-Allow-Methods': 'POST, OPTIONS',
-	'Access-Control-Allow-Headers': 'Content-Type',
+// Allowed origins for CORS
+const ALLOWED_ORIGINS: string[] = [
+	'https://specto.darkroom.engineering',
+	'tauri://localhost',
+	...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:1420'] : []),
+]
+
+function getCorsHeaders(request: NextRequest): Record<string, string> {
+	const origin = request.headers.get('origin')
+	const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering'
+	return {
+		'Access-Control-Allow-Origin': allowedOrigin,
+		'Access-Control-Allow-Methods': 'POST, OPTIONS',
+		'Access-Control-Allow-Headers': 'Content-Type',
+	}
 }
 
-export async function OPTIONS() {
-	return NextResponse.json({}, { headers: corsHeaders })
+export async function OPTIONS(request: NextRequest) {
+	return NextResponse.json({}, { headers: getCorsHeaders(request) })
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<LicenseResponse>> {
+	const corsHeaders = getCorsHeaders(request)
 	try {
 		const body = await request.json().catch(() => null)
 

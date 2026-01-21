@@ -54,7 +54,15 @@ export class DiskCache implements CacheStore {
 
 		try {
 			const content = await readFile(filePath, 'utf-8')
-			const entry = JSON.parse(content) as CacheEntry<T>
+			const parsed = JSON.parse(content)
+
+			// Validate the parsed data has expected cache entry structure
+			if (!parsed || typeof parsed !== 'object' || !('data' in parsed) || !('expiresAt' in parsed)) {
+				this._stats.misses++
+				return null
+			}
+
+			const entry = parsed as CacheEntry<T>
 
 			// Check if completely expired (beyond stale-while-revalidate)
 			const now = Date.now()
@@ -176,8 +184,17 @@ export class DiskCache implements CacheStore {
 				try {
 					const filePath = join(this.cacheDir, file)
 					const content = await readFile(filePath, 'utf-8')
-					const entry = JSON.parse(content) as CacheEntry<unknown>
+					const parsed = JSON.parse(content)
 
+					// Validate the parsed data has expected structure
+					if (!parsed || typeof parsed !== 'object' || !('expiresAt' in parsed)) {
+						// Invalid cache file, remove it
+						await unlink(filePath)
+						removed++
+						continue
+					}
+
+					const entry = parsed as CacheEntry<unknown>
 					const maxStaleTime = entry.expiresAt + this.options.staleWhileRevalidate
 					if (now > maxStaleTime) {
 						await unlink(filePath)
