@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, Badge } from '@specto/ui'
+import { Card, Button, Badge, AlertDialog } from '@specto/ui'
 import { toast } from 'sonner'
 import { getVersion } from '@tauri-apps/api/app'
 import { useAuthStore } from '../stores/auth'
 import { useLicenseStore, useProFeature, FREE_LIMITS } from '../stores/license'
+import { useThemeStore, type Theme } from '../stores/theme'
 import { Spinner } from '../components/spinner'
 import { open } from '@tauri-apps/plugin-shell'
 
@@ -76,8 +77,10 @@ export function Settings() {
 		clearLicense,
 	} = useLicenseStore()
 	const { isPro, isDev } = useProFeature()
+	const { theme, setTheme } = useThemeStore()
 	const [keyInput, setKeyInput] = useState('')
 	const [appVersion, setAppVersion] = useState<string>('')
+	const [showDeactivateDialog, setShowDeactivateDialog] = useState(false)
 
 	// Get app version on mount
 	useEffect(() => {
@@ -190,18 +193,25 @@ export function Settings() {
 								</div>
 								<div className="flex gap-2">
 									<Button
-										variant="secondary"
+										variant={theme === 'dark' ? 'secondary' : 'ghost'}
 										size="sm"
-										onClick={() => document.documentElement.setAttribute('data-theme', 'dark')}
+										onClick={() => setTheme('dark')}
 									>
 										Dark
 									</Button>
 									<Button
-										variant="ghost"
+										variant={theme === 'light' ? 'secondary' : 'ghost'}
 										size="sm"
-										onClick={() => document.documentElement.setAttribute('data-theme', 'light')}
+										onClick={() => setTheme('light')}
 									>
 										Light
+									</Button>
+									<Button
+										variant={theme === 'system' ? 'secondary' : 'ghost'}
+										size="sm"
+										onClick={() => setTheme('system')}
+									>
+										System
 									</Button>
 								</div>
 							</div>
@@ -291,9 +301,35 @@ export function Settings() {
 											Activated on {new Date(activatedAt).toLocaleDateString()}
 										</p>
 									)}
-									<Button variant="ghost" size="sm" onClick={clearLicense}>
-										Deactivate License
-									</Button>
+									<AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+										<AlertDialog.Trigger asChild>
+											<Button variant="ghost" size="sm">
+												Deactivate License
+											</Button>
+										</AlertDialog.Trigger>
+										<AlertDialog.Content>
+											<AlertDialog.Header>
+												<AlertDialog.Title>Deactivate License?</AlertDialog.Title>
+												<AlertDialog.Description>
+													Are you sure you want to deactivate your Pro license? You will lose access to all Pro features and will need to re-enter your license key to reactivate.
+												</AlertDialog.Description>
+											</AlertDialog.Header>
+											<AlertDialog.Footer>
+												<AlertDialog.Cancel asChild>
+													<Button variant="secondary">Cancel</Button>
+												</AlertDialog.Cancel>
+												<AlertDialog.Action asChild>
+													<Button variant="danger" onClick={() => {
+														clearLicense()
+														setShowDeactivateDialog(false)
+														toast.success('License deactivated')
+													}}>
+														Deactivate
+													</Button>
+												</AlertDialog.Action>
+											</AlertDialog.Footer>
+										</AlertDialog.Content>
+									</AlertDialog>
 								</div>
 							) : (
 								<div className="space-y-6">

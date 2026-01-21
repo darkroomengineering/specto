@@ -1,8 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { useAuthStore } from '../stores/auth'
 import { Button, Card } from '@specto/ui'
 import { Loading } from './spinner'
 import { open } from '@tauri-apps/plugin-shell'
+
+// Auth timeout constants
+const AUTH_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+const AUTH_WARNING_MS = 3 * 60 * 1000 // 3 minutes warning
 
 interface AuthGuardProps {
 	children: ReactNode
@@ -11,21 +15,55 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
 	const { isAuthenticated, isLoading, error, ghNotInstalled, checkAuth, login } = useAuthStore()
 	const [loginStarted, setLoginStarted] = useState(false)
+	const [elapsedTime, setElapsedTime] = useState(0)
+	const loginStartTimeRef = useRef<number | null>(null)
 
 	useEffect(() => {
 		checkAuth()
 	}, [checkAuth])
 
-	// Poll for auth after login started
+	// Poll for auth after login started with timeout
 	useEffect(() => {
 		if (!loginStarted) return
 
+		// Track when login started
+		if (!loginStartTimeRef.current) {
+			loginStartTimeRef.current = Date.now()
+		}
+
 		const interval = setInterval(() => {
 			checkAuth()
+
+			// Update elapsed time
+			if (loginStartTimeRef.current) {
+				const elapsed = Date.now() - loginStartTimeRef.current
+				setElapsedTime(elapsed)
+
+				// Check for timeout
+				if (elapsed >= AUTH_TIMEOUT_MS) {
+					setLoginStarted(false)
+					loginStartTimeRef.current = null
+					setElapsedTime(0)
+				}
+			}
 		}, 2000)
 
 		return () => clearInterval(interval)
 	}, [loginStarted, checkAuth])
+
+	const handleCancelLogin = () => {
+		setLoginStarted(false)
+		loginStartTimeRef.current = null
+		setElapsedTime(0)
+	}
+
+	const formatElapsedTime = (ms: number) => {
+		const minutes = Math.floor(ms / 60000)
+		const seconds = Math.floor((ms % 60000) / 1000)
+		return `${minutes}:${seconds.toString().padStart(2, '0')}`
+	}
+
+	const showWarning = elapsedTime >= AUTH_WARNING_MS && elapsedTime < AUTH_TIMEOUT_MS
 
 	const handleLogin = async () => {
 		setLoginStarted(true)
@@ -72,10 +110,23 @@ export function AuthGuard({ children }: AuthGuardProps) {
 							<div className="space-y-4">
 								<div className="p-4 rounded-lg bg-[var(--background)] border border-[var(--border)]">
 									<Loading text="Complete login in your browser..." />
+									<p className="text-xs text-[var(--muted)] mt-2 text-center">
+										Time elapsed: {formatElapsedTime(elapsedTime)}
+									</p>
+									{showWarning && (
+										<p className="text-xs text-[var(--color-warning)] mt-1 text-center">
+											Login will timeout in {formatElapsedTime(AUTH_TIMEOUT_MS - elapsedTime)}
+										</p>
+									)}
 								</div>
-								<Button variant="secondary" onClick={checkAuth}>
-									Check Again
-								</Button>
+								<div className="flex gap-2 justify-center">
+									<Button variant="secondary" onClick={checkAuth}>
+										Check Again
+									</Button>
+									<Button variant="ghost" onClick={handleCancelLogin}>
+										Cancel
+									</Button>
+								</div>
 							</div>
 						) : (
 							<div className="space-y-4">

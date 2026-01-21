@@ -66,3 +66,31 @@
   --card: var(--color-gray-50);
   --card-hover: var(--color-gray-100);
 }
+
+/* Extended Animation Tokens */
+:root {
+  --duration-micro: 100ms;
+  --duration-normal: 250ms;
+  --duration-emphasis: 400ms;
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Skeleton Tokens */
+:root {
+  --skeleton-base: var(--card);
+  --skeleton-highlight: var(--card-hover);
+}
+
+/* Focus Ring Tokens */
+:root {
+  --focus-ring: var(--accent);
+  --focus-ring-offset: 2px;
+}
+
+/* Z-Index Scale */
+:root {
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}
