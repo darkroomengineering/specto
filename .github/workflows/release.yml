@@ -90,6 +90,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(node -p "require('./apps/desktop/package.json').version")
-          gh release edit "v${VERSION}" --draft=false --latest
           gh release view "v${VERSION}" --json assets --jq '.assets[].name' | grep -qx latest.json \
-            || { echo "::error::latest.json missing; in-app updates will not find this release"; exit 1; }
+            || { echo "::error::latest.json missing from the draft; in-app updates would not find this release"; exit 1; }
+          gh release edit "v${VERSION}" --draft=false --latest
