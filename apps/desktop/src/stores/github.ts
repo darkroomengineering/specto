@@ -183,6 +183,7 @@ interface GitHubState {
 	metricType: MetricType
 	isLoading: LoadingState
 	error: string | null
+	activityError: string | null
 	notFound: boolean
 	suggestions: OrgSuggestion[]
 	cacheAge: string | null // For showing "Last updated X ago" when using cached data
@@ -202,6 +203,7 @@ const EMPTY_ORG = {
 	prs: null,
 	issues: null,
 	error: null,
+	activityError: null,
 	notFound: false,
 	suggestions: [] as OrgSuggestion[],
 	cacheAge: null,
@@ -304,6 +306,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		if (cached) {
 			set({
 				...cached,
+				activityError: null,
 				isLoading: { ...get().isLoading, commits: false, prs: false, issues: false },
 			})
 			return
@@ -337,13 +340,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 				prs: prs.status === 'fulfilled' ? prs.value : null,
 				issues: issues.status === 'fulfilled' ? issues.value : null,
 				isLoading: { ...s.isLoading, commits: false, prs: false, issues: false },
-				error: failed ? describeError(failed.reason, 'Failed to fetch activity') : s.error,
+				activityError: failed ? describeError(failed.reason, 'Failed to fetch activity') : null,
 			}))
 		} catch (err) {
 			if (get().currentOrg !== org || get().timeframe !== timeframe) return
 			set((s) => ({
 				isLoading: { ...s.isLoading, commits: false, prs: false, issues: false },
-				error: describeError(err, 'Failed to fetch activity'),
+				activityError: describeError(err, 'Failed to fetch activity'),
 			}))
 		}
 	},

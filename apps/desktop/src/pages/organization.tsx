@@ -646,7 +646,7 @@ export function Organization() {
 									isLoading.commits
 										? '...'
 										: contributorCount > 0
-											? Math.round(totalCommits / contributorCount)
+											? Math.round((commits?.attributed ?? 0) / contributorCount)
 											: '—'
 								}
 								description={getTimeframeLabel(timeframe)}

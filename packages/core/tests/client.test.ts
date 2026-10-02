@@ -311,3 +311,58 @@ describe('search activity', () => {
 		)
 	})
 })
+
+describe('getOrgOverview', () => {
+	const team = (slug: string) => ({
+		id: slug,
+		slug,
+		name: slug,
+		description: null,
+		privacy: 'VISIBLE',
+		url: `https://github.com/orgs/acme/teams/${slug}`,
+		members: { totalCount: 2 },
+		repositories: { totalCount: 1 },
+		parentTeam: null,
+	})
+
+	test('follows team pages beyond the first 100', async () => {
+		mockFetch((_url, body) => {
+			const { variables } = body as { variables: { after?: string } }
+			if (variables.after === 'c1') {
+				return json({
+					data: {
+						organization: {
+							teams: { nodes: [team('b')], pageInfo: { hasNextPage: false, endCursor: null } },
+						},
+					},
+				})
+			}
+			return json({
+				data: {
+					organization: {
+						login: 'acme',
+						name: 'Acme',
+						description: null,
+						avatarUrl: 'a.png',
+						url: 'https://github.com/acme',
+						websiteUrl: null,
+						location: null,
+						createdAt: '2020-01-01T00:00:00Z',
+						repositories: { totalCount: 3 },
+						membersWithRole: { totalCount: 4 },
+						teams: { nodes: [team('a')], pageInfo: { hasNextPage: true, endCursor: 'c1' } },
+					},
+				},
+			})
+		})
+
+		const overview = await gh.getOrgOverview('acme')
+		expect(overview.teams.map((t) => t.slug)).toEqual(['a', 'b'])
+		expect(overview.teams[1]).toMatchObject({
+			memberCount: 2,
+			repositoryCount: 1,
+			parentName: null,
+		})
+		expect(requests).toHaveLength(2)
+	})
+})

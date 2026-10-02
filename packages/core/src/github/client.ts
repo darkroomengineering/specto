@@ -160,7 +160,22 @@ export function createGitHubClient({ token, userAgent = 'specto' }: GitHubClient
 	}
 }
 
+const TEAM_FIELDS = `
+	fragment TeamFields on Team {
+		id
+		slug
+		name
+		description
+		privacy
+		url
+		members { totalCount }
+		repositories { totalCount }
+		parentTeam { name }
+	}
+`
+
 const ORG_OVERVIEW_QUERY = `
+	${TEAM_FIELDS}
 	query ($login: String!) {
 		organization(login: $login) {
 			login
@@ -174,21 +189,41 @@ const ORG_OVERVIEW_QUERY = `
 			repositories { totalCount }
 			membersWithRole { totalCount }
 			teams(first: 100) {
-				nodes {
-					id
-					slug
-					name
-					description
-					privacy
-					url
-					members { totalCount }
-					repositories { totalCount }
-					parentTeam { name }
-				}
+				nodes { ...TeamFields }
+				pageInfo { hasNextPage endCursor }
 			}
 		}
 	}
 `
+
+const ORG_TEAMS_QUERY = `
+	${TEAM_FIELDS}
+	query ($login: String!, $after: String) {
+		organization(login: $login) {
+			teams(first: 100, after: $after) {
+				nodes { ...TeamFields }
+				pageInfo { hasNextPage endCursor }
+			}
+		}
+	}
+`
+
+interface TeamNode {
+	id: string
+	slug: string
+	name: string
+	description: string | null
+	privacy: 'SECRET' | 'VISIBLE'
+	url: string
+	members: { totalCount: number }
+	repositories: { totalCount: number }
+	parentTeam: { name: string } | null
+}
+
+interface TeamConnection {
+	nodes: TeamNode[]
+	pageInfo: { hasNextPage: boolean; endCursor: string | null }
+}
 
 interface OrgOverviewResponse {
 	organization: {
@@ -202,24 +237,24 @@ interface OrgOverviewResponse {
 		createdAt: string
 		repositories: { totalCount: number }
 		membersWithRole: { totalCount: number }
-		teams: {
-			nodes: Array<{
-				id: string
-				slug: string
-				name: string
-				description: string | null
-				privacy: 'SECRET' | 'VISIBLE'
-				url: string
-				members: { totalCount: number }
-				repositories: { totalCount: number }
-				parentTeam: { name: string } | null
-			}>
-		} | null
+		teams: TeamConnection | null
 	}
 }
 
 async function getOrgOverview(graphql: GraphQL, login: string): Promise<OrgOverview> {
 	const { organization: o } = await graphql<OrgOverviewResponse>(ORG_OVERVIEW_QUERY, { login })
+
+	const teams = [...(o.teams?.nodes ?? [])]
+	let page = o.teams?.pageInfo
+	while (page?.hasNextPage) {
+		const next = await graphql<{ organization: { teams: TeamConnection | null } }>(
+			ORG_TEAMS_QUERY,
+			{ login, after: page.endCursor }
+		)
+		teams.push(...(next.organization.teams?.nodes ?? []))
+		page = next.organization.teams?.pageInfo
+	}
+
 	return {
 		login: o.login,
 		name: o.name,
@@ -231,7 +266,7 @@ async function getOrgOverview(graphql: GraphQL, login: string): Promise<OrgOverv
 		createdAt: o.createdAt,
 		repositoryCount: o.repositories.totalCount,
 		memberCount: o.membersWithRole.totalCount,
-		teams: (o.teams?.nodes ?? []).map(({ members, repositories, parentTeam, ...team }) => ({
+		teams: teams.map(({ members, repositories, parentTeam, ...team }) => ({
 			...team,
 			memberCount: members.totalCount,
 			repositoryCount: repositories.totalCount,
