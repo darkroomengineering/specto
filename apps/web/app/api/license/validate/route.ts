@@ -1,138 +1,31 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { corsHeaders, preflight } from '@/lib/cors'
+import { validateLicenseKey } from '@/lib/polar'
 
-const POLAR_ORG_ID = 'darkroomengineering'
+const bodySchema = z.object({ licenseKey: z.string().min(1) })
 
-// Master license key (set in environment, never expires)
-const MASTER_LICENSE_KEY = process.env.MASTER_LICENSE_KEY
-
-interface ValidateRequest {
-	licenseKey: string
+export function OPTIONS(request: NextRequest) {
+	return preflight(request, 'POST')
 }
 
-interface LicenseResponse {
-	valid: boolean
-	isPro: boolean
-	expiresAt: string | null
-	error?: string
-}
-
-// Allowed origins for CORS
-const ALLOWED_ORIGINS: string[] = [
-	'https://specto.darkroom.engineering',
-	'http://tauri.localhost', // Tauri 2.x production origin
-	'tauri://localhost', // Legacy Tauri origin
-	...(process.env.NODE_ENV === 'development'
-		? ['http://localhost:3000', 'http://localhost:1420']
-		: []),
-]
-
-function getCorsHeaders(request: NextRequest): Record<string, string> {
-	const origin = request.headers.get('origin')
-	const allowedOrigin =
-		origin && ALLOWED_ORIGINS.includes(origin)
-			? origin
-			: (ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering')
-	return {
-		'Access-Control-Allow-Origin': allowedOrigin,
-		'Access-Control-Allow-Methods': 'POST, OPTIONS',
-		'Access-Control-Allow-Headers': 'Content-Type',
-	}
-}
-
-export async function OPTIONS(request: NextRequest) {
-	return NextResponse.json({}, { headers: getCorsHeaders(request) })
-}
-
-export async function POST(request: NextRequest): Promise<NextResponse<LicenseResponse>> {
-	const corsHeaders = getCorsHeaders(request)
-	try {
-		const body = await request.json().catch(() => null)
-
-		// Validate request body structure
-		if (!body || typeof body !== 'object' || typeof body.licenseKey !== 'string') {
-			return NextResponse.json(
-				{ valid: false, isPro: false, expiresAt: null, error: 'Invalid request body' },
-				{ status: 400, headers: corsHeaders }
-			)
-		}
-
-		const { licenseKey } = body as ValidateRequest
-
-		if (!licenseKey) {
-			return NextResponse.json(
-				{ valid: false, isPro: false, expiresAt: null, error: 'License key required' },
-				{ status: 400, headers: corsHeaders }
-			)
-		}
-
-		// Check master license key (for team use, never expires)
-		if (MASTER_LICENSE_KEY && licenseKey === MASTER_LICENSE_KEY) {
-			return NextResponse.json(
-				{
-					valid: true,
-					isPro: true,
-					expiresAt: null, // Never expires
-				},
-				{ headers: corsHeaders }
-			)
-		}
-
-		// Validate against Polar API (server-side, can't be bypassed)
-		const response = await fetch('https://api.polar.sh/v1/customer-portal/license-keys/validate', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				key: licenseKey,
-				organization_id: POLAR_ORG_ID,
-			}),
-		})
-
-		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({}))
-			return NextResponse.json(
-				{
-					valid: false,
-					isPro: false,
-					expiresAt: null,
-					error: errorData.detail || 'Invalid license key',
-				},
-				{ status: 200, headers: corsHeaders } // Return 200 with valid: false, not 4xx
-			)
-		}
-
-		const data = await response.json()
-
-		const isValid = data.valid === true
-		const expiresAt = data.expires_at || null
-		const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false
-
-		if (isValid && !isExpired) {
-			return NextResponse.json(
-				{
-					valid: true,
-					isPro: true,
-					expiresAt,
-				},
-				{ headers: corsHeaders }
-			)
-		}
-
+export async function POST(request: NextRequest) {
+	const headers = corsHeaders(request, 'POST')
+	const parsed = bodySchema.safeParse(await request.json().catch(() => null))
+	if (!parsed.success) {
 		return NextResponse.json(
-			{
-				valid: false,
-				isPro: false,
-				expiresAt,
-				error: isExpired ? 'License has expired' : 'Invalid license key',
-			},
-			{ headers: corsHeaders }
-		)
-	} catch (error) {
-		console.error('License validation error:', error)
-		return NextResponse.json(
-			{ valid: false, isPro: false, expiresAt: null, error: 'Validation service unavailable' },
-			{ status: 500, headers: corsHeaders }
+			{ valid: false, isPro: false, expiresAt: null, error: 'Invalid request body' },
+			{ status: 400, headers }
 		)
 	}
+
+	const result = await validateLicenseKey(parsed.data.licenseKey)
+	// Bad keys are a normal outcome: 200 with valid: false
+	if (!result.valid) {
+		return NextResponse.json(
+			{ valid: false, isPro: false, expiresAt: null, error: result.error },
+			{ headers }
+		)
+	}
+	return NextResponse.json({ valid: true, isPro: true, expiresAt: result.expiresAt }, { headers })
 }

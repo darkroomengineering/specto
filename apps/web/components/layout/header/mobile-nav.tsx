@@ -38,8 +38,14 @@ export function MobileNav({ items }: MobileNavProps) {
 
 			{/* Mobile menu overlay */}
 			{isOpen && (
-				<div className={s.mobileMenuOverlay} onClick={closeMenu}>
-					<nav className={s.mobileMenu} onClick={(e) => e.stopPropagation()}>
+				<div className={s.mobileMenuOverlay}>
+					<button
+						type="button"
+						aria-label="Close menu"
+						className={s.mobileMenuBackdrop}
+						onClick={closeMenu}
+					/>
+					<nav className={s.mobileMenu}>
 						{items.map((item) => (
 							<Link
 								key={item.href}

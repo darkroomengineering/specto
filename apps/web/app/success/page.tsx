@@ -72,6 +72,7 @@ export default function SuccessPage() {
 					transition={{ type: 'spring', damping: 12, stiffness: 200 }}
 				>
 					<svg
+						aria-hidden="true"
 						className="w-10 h-10 text-green-500"
 						fill="none"
 						stroke="currentColor"
@@ -109,12 +110,14 @@ export default function SuccessPage() {
 							<div className="flex items-center justify-between mb-2">
 								<span className="text-sm font-medium text-[var(--muted)]">Your License Key</span>
 								<button
+									type="button"
 									onClick={handleCopyPlaceholder}
 									className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1"
 								>
 									{copied ? (
 										<>
 											<svg
+												aria-hidden="true"
 												className="w-3 h-3"
 												fill="none"
 												stroke="currentColor"
@@ -132,6 +135,7 @@ export default function SuccessPage() {
 									) : (
 										<>
 											<svg
+												aria-hidden="true"
 												className="w-3 h-3"
 												fill="none"
 												stroke="currentColor"
@@ -169,6 +173,7 @@ export default function SuccessPage() {
 						<Card.Header>
 							<h2 className="text-lg font-semibold flex items-center gap-2">
 								<svg
+									aria-hidden="true"
 									className="w-5 h-5 text-[var(--accent)]"
 									fill="none"
 									stroke="currentColor"
@@ -250,6 +255,7 @@ export default function SuccessPage() {
 									(feature) => (
 										<li key={feature} className="flex items-center gap-2">
 											<svg
+												aria-hidden="true"
 												className="w-4 h-4 text-green-500"
 												fill="none"
 												stroke="currentColor"
@@ -281,7 +287,7 @@ export default function SuccessPage() {
 					<Link href="/downloads">
 						<Button className="w-full" size="lg">
 							<span className="flex items-center justify-center gap-2">
-								<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+								<svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 									<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
 								</svg>
 								Download Specto

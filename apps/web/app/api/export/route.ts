@@ -1,144 +1,82 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { corsHeaders, preflight } from '@/lib/cors'
+import { validateLicenseKey } from '@/lib/polar'
 
-const POLAR_ORG_ID = 'darkroomengineering'
+const count = z.number().finite()
 
-// Master license key (set in environment, never expires)
-const MASTER_LICENSE_KEY = process.env.MASTER_LICENSE_KEY
+const exportSchema = z.object({
+	licenseKey: z.string().min(1),
+	format: z.enum(['csv', 'json']),
+	data: z.object({
+		organization: z.string(),
+		metrics: z.object({
+			commits: count,
+			pullRequests: count,
+			issues: count,
+			contributors: count,
+			repositories: count,
+			stars: count.optional(),
+		}),
+		period: z.string(),
+		generatedAt: z.string(),
+	}),
+})
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS: string[] = [
-	'https://specto.darkroom.engineering',
-	'http://tauri.localhost', // Tauri 2.x production origin
-	'tauri://localhost', // Legacy Tauri origin
-	...(process.env.NODE_ENV === 'development'
-		? ['http://localhost:3000', 'http://localhost:1420']
-		: []),
-]
+type ExportData = z.infer<typeof exportSchema>['data']
 
-function getCorsHeaders(request: NextRequest): Record<string, string> {
-	const origin = request.headers.get('origin')
-	const allowedOrigin =
-		origin && ALLOWED_ORIGINS.includes(origin)
-			? origin
-			: (ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering')
-	return {
-		'Access-Control-Allow-Origin': allowedOrigin,
-		'Access-Control-Allow-Methods': 'POST, OPTIONS',
-		'Access-Control-Allow-Headers': 'Content-Type',
-	}
+function csvCell(value: string | number): string {
+	const text = String(value)
+	return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
-export async function OPTIONS(request: NextRequest) {
-	return NextResponse.json({}, { headers: getCorsHeaders(request) })
-}
-
-interface ExportRequest {
-	licenseKey: string
-	format: 'csv' | 'json'
-	data: {
-		organization: string
-		metrics: {
-			commits: number
-			pullRequests: number
-			issues: number
-			contributors: number
-			repositories: number
-			stars: number
-		}
-		period: string
-		generatedAt: string
-	}
-}
-
-// Validate license server-side
-async function validateLicense(licenseKey: string): Promise<boolean> {
-	// Check master license key first
-	if (MASTER_LICENSE_KEY && licenseKey === MASTER_LICENSE_KEY) {
-		return true
-	}
-
-	try {
-		const response = await fetch('https://api.polar.sh/v1/customer-portal/license-keys/validate', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				key: licenseKey,
-				organization_id: POLAR_ORG_ID,
-			}),
-		})
-
-		if (!response.ok) return false
-
-		const data = await response.json()
-		const isValid = data.valid === true
-		const expiresAt = data.expires_at ? new Date(data.expires_at) : null
-		const isExpired = expiresAt ? expiresAt < new Date() : false
-
-		return isValid && !isExpired
-	} catch {
-		return false
-	}
-}
-
-function generateCSV(data: ExportRequest['data']): string {
-	const lines = [
-		'Metric,Value',
-		`Organization,${data.organization}`,
-		`Period,${data.period}`,
-		`Commits,${data.metrics.commits}`,
-		`Pull Requests,${data.metrics.pullRequests}`,
-		`Issues,${data.metrics.issues}`,
-		`Contributors,${data.metrics.contributors}`,
-		`Repositories,${data.metrics.repositories}`,
-		`Stars,${data.metrics.stars}`,
-		`Generated At,${data.generatedAt}`,
+function generateCSV({ organization, period, metrics, generatedAt }: ExportData): string {
+	const rows: [string, string | number][] = [
+		['Organization', organization],
+		['Period', period],
+		['Commits', metrics.commits],
+		['Pull Requests', metrics.pullRequests],
+		['Issues', metrics.issues],
+		['Contributors', metrics.contributors],
+		['Repositories', metrics.repositories],
+		...(metrics.stars === undefined ? [] : [['Stars', metrics.stars] as [string, number]]),
+		['Generated At', generatedAt],
 	]
-	return lines.join('\n')
+	return ['Metric,Value', ...rows.map(([k, v]) => `${csvCell(k)},${csvCell(v)}`)].join('\n')
+}
+
+export function OPTIONS(request: NextRequest) {
+	return preflight(request, 'POST')
 }
 
 export async function POST(request: NextRequest) {
-	const corsHeaders = getCorsHeaders(request)
-	try {
-		const body: ExportRequest = await request.json()
-		const { licenseKey, format, data } = body
+	const headers = corsHeaders(request, 'POST')
 
-		// Validate license server-side (cannot be bypassed)
-		if (!licenseKey) {
-			return NextResponse.json(
-				{ error: 'License key required for export' },
-				{ status: 401, headers: corsHeaders }
-			)
-		}
+	const parsed = exportSchema.safeParse(await request.json().catch(() => null))
+	if (!parsed.success) {
+		return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers })
+	}
+	const { licenseKey, format, data } = parsed.data
 
-		const isValid = await validateLicense(licenseKey)
-		if (!isValid) {
-			return NextResponse.json(
-				{ error: 'Valid Pro license required for export' },
-				{ status: 403, headers: corsHeaders }
-			)
-		}
+	const license = await validateLicenseKey(licenseKey)
+	if (!license.valid) {
+		return NextResponse.json(
+			{ error: 'Valid Pro license required for export' },
+			{ status: 403, headers }
+		)
+	}
 
-		// Generate export
-		if (format === 'csv') {
-			const csv = generateCSV(data)
-			return new NextResponse(csv, {
-				headers: {
-					...corsHeaders,
-					'Content-Type': 'text/csv',
-					'Content-Disposition': `attachment; filename="specto-${data.organization}-${Date.now()}.csv"`,
-				},
-			})
-		}
+	const filename = `specto-${data.organization.replace(/[^\w.-]/g, '_')}-${Date.now()}.${format}`
+	const disposition = `attachment; filename="${filename}"`
 
-		// JSON format
-		return NextResponse.json(data, {
+	if (format === 'csv') {
+		return new NextResponse(generateCSV(data), {
 			headers: {
-				...corsHeaders,
-				'Content-Disposition': `attachment; filename="specto-${data.organization}-${Date.now()}.json"`,
+				...headers,
+				'Content-Type': 'text/csv',
+				'Content-Disposition': disposition,
 			},
 		})
-	} catch (error) {
-		console.error('Export error:', error)
-		return NextResponse.json({ error: 'Export failed' }, { status: 500, headers: corsHeaders })
 	}
+	return NextResponse.json(data, { headers: { ...headers, 'Content-Disposition': disposition } })
 }

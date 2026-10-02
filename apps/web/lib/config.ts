@@ -73,7 +73,8 @@ function hasDownloadableAssets(info: ReleaseInfo): boolean {
 export async function getLatestRelease(): Promise<ReleaseInfo | null> {
 	try {
 		const headers: HeadersInit = {
-			Accept: 'application/vnd.github.v3+json',
+			Accept: 'application/vnd.github+json',
+			'X-GitHub-Api-Version': '2022-11-28',
 		}
 
 		// Use token if available for higher rate limits

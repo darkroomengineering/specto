@@ -106,6 +106,14 @@
 	animation: fadeIn 0.2s ease;
 }
 
+.mobileMenuBackdrop {
+	position: absolute;
+	inset: 0;
+	border: 0;
+	background: transparent;
+	cursor: default;
+}
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
