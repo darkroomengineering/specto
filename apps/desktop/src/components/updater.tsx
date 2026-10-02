@@ -5,30 +5,24 @@ import { useEffect, useState } from 'react'
 
 export function Updater() {
 	const [update, setUpdate] = useState<Update | null>(null)
-	const [_checking, setChecking] = useState(false)
 	const [downloading, setDownloading] = useState(false)
 	const [progress, setProgress] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
-		checkForUpdate()
-	}, [checkForUpdate])
-
-	async function checkForUpdate() {
-		setChecking(true)
-		setError(null)
-		try {
-			const available = await check()
-			if (available) {
-				setUpdate(available)
+		async function checkForUpdate() {
+			try {
+				const available = await check()
+				if (available) {
+					setUpdate(available)
+				}
+			} catch (err) {
+				// Silently fail - update server might not be configured yet
+				console.log('Update check failed:', err)
 			}
-		} catch (err) {
-			// Silently fail - update server might not be configured yet
-			console.log('Update check failed:', err)
-		} finally {
-			setChecking(false)
 		}
-	}
+		checkForUpdate()
+	}, [])
 
 	async function installUpdate() {
 		if (!update) return
@@ -83,11 +77,18 @@ export function Updater() {
 							</p>
 						</div>
 						<button
+							type="button"
 							onClick={dismiss}
 							className="text-[var(--muted)] hover:text-[var(--foreground)] p-1"
 							aria-label="Dismiss"
 						>
-							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg
+								aria-hidden="true"
+								className="w-4 h-4"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"

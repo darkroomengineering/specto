@@ -117,7 +117,7 @@ export function Dashboard() {
 	}, [username, getToken])
 
 	return (
-		<div className="h-full flex flex-col p-8 overflow-auto" role="region" aria-label="Dashboard">
+		<section className="h-full flex flex-col p-8 overflow-auto" aria-label="Dashboard">
 			{/* Header */}
 			<motion.div
 				className="mb-8"
@@ -199,6 +199,7 @@ export function Dashboard() {
 											<span> / {FREE_LIMITS.maxOrganizations}</span>
 											{userStats.orgs.length >= FREE_LIMITS.maxOrganizations && (
 												<button
+													type="button"
 													onClick={() => navigate('/settings')}
 													className="ml-2 text-[var(--accent)] hover:underline"
 												>
@@ -252,6 +253,7 @@ export function Dashboard() {
 						<Card.Content className="flex flex-col items-center justify-center h-full py-12 text-center">
 							<div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mb-4">
 								<svg
+									aria-hidden="true"
 									className="w-6 h-6 text-[var(--muted)]"
 									fill="none"
 									stroke="currentColor"
@@ -289,6 +291,6 @@ export function Dashboard() {
 					</Card>
 				</motion.div>
 			)}
-		</div>
+		</section>
 	)
 }

@@ -26,7 +26,10 @@ export function Organization() {
 	const navigate = useNavigate()
 	const {
 		currentOrg,
-		orgData,
+		overview,
+		commits,
+		prs,
+		issues,
 		isLoading,
 		error,
 		notFound,
@@ -51,7 +54,7 @@ export function Organization() {
 	]
 
 	// Determine if primary data is still loading (for coordinated skeleton)
-	const isPrimaryLoading = isLoading.info && !orgData.info
+	const isPrimaryLoading = isLoading.overview && !overview
 
 	useEffect(() => {
 		if (orgName && orgName !== currentOrg) {
@@ -65,18 +68,30 @@ export function Organization() {
 		}
 	}, [currentOrg, fetchAll])
 
-	const {
-		info,
-		members,
-		teams,
-		commitStats,
-		prStats,
-		issueStats,
-		repos,
-		totalCommits,
-		totalPRs,
-		totalIssues,
-	} = orgData
+	const teams = overview?.teams ?? []
+	// Full author lists live in the store; tables show the top 10
+	const commitStats = commits?.byAuthor.slice(0, 10) ?? []
+	const prStats = prs?.byAuthor.slice(0, 10) ?? []
+	const issueStats = issues?.byAuthor.slice(0, 10) ?? []
+	const totalCommits = commits?.total ?? 0
+	const totalPRs = prs?.total ?? 0
+	const totalIssues = issues?.total ?? 0
+	const contributorCount = commits?.byAuthor.length ?? 0
+	const isActivityLoading = isLoading.commits || isLoading.prs || isLoading.issues
+
+	// Say so when the author breakdown covers only part of the data
+	const truncationNote =
+		metricType === 'commits'
+			? commits && !commits.complete
+				? 'Some repositories have more commits than were fetched, so author counts may be low.'
+				: null
+			: metricType === 'prs'
+				? prs && prs.sampled < prs.total
+					? `Author breakdown is from the latest ${prs.sampled.toLocaleString()} of ${prs.total.toLocaleString()} pull requests.`
+					: null
+				: issues && issues.sampled < issues.total
+					? `Author breakdown is from the latest ${issues.sampled.toLocaleString()} of ${issues.total.toLocaleString()} issues.`
+					: null
 
 	const handleExport = async (format: 'csv' | 'json') => {
 		if (!canExport || !orgName) {
@@ -136,9 +151,9 @@ export function Organization() {
 		const data = {
 			organization: {
 				name: orgName,
-				description: info?.description || null,
-				publicRepos: info?.public_repos || repos.length,
-				members: members.length,
+				description: overview?.description || null,
+				repositories: overview?.repositoryCount ?? 0,
+				members: overview?.memberCount ?? 0,
 				teams: teams.length,
 			},
 			period,
@@ -147,7 +162,7 @@ export function Organization() {
 				totalCommits,
 				totalPullRequests: totalPRs,
 				totalIssues,
-				activeContributors: commitStats.length,
+				activeContributors: contributorCount,
 			},
 			topContributorsByCommits: commitStats.map((s) => ({
 				author: s.author,
@@ -166,7 +181,7 @@ export function Organization() {
 			teams: teams.slice(0, 10).map((t) => ({
 				name: t.name,
 				privacy: t.privacy,
-				membersCount: t.members_count,
+				membersCount: t.memberCount,
 			})),
 		}
 		return JSON.stringify(data, null, 2)
@@ -188,9 +203,9 @@ export function Organization() {
 		lines.push(`Total Commits,${totalCommits}`)
 		lines.push(`Total Pull Requests,${totalPRs}`)
 		lines.push(`Total Issues,${totalIssues}`)
-		lines.push(`Active Contributors,${commitStats.length}`)
-		lines.push(`Repositories,${repos.length}`)
-		lines.push(`Members,${members.length}`)
+		lines.push(`Active Contributors,${contributorCount}`)
+		lines.push(`Repositories,${overview?.repositoryCount ?? 0}`)
+		lines.push(`Members,${overview?.memberCount ?? 0}`)
 		lines.push(`Teams,${teams.length}`)
 		lines.push('')
 
@@ -236,12 +251,7 @@ export function Organization() {
 	}
 
 	const renderContributorTable = () => {
-		const isLoadingData =
-			metricType === 'commits'
-				? isLoading.commits
-				: metricType === 'prs'
-					? isLoading.prs
-					: isLoading.issues
+		const isLoadingData = isLoading[metricType === 'reviews' ? 'issues' : metricType]
 
 		const data =
 			metricType === 'commits' ? commitStats : metricType === 'prs' ? prStats : issueStats
@@ -392,9 +402,8 @@ export function Organization() {
 	const handleUpgrade = () => navigate('/settings')
 
 	return (
-		<div
+		<section
 			className="h-full flex flex-col relative overflow-hidden"
-			role="region"
 			aria-label={`Organization: ${orgName}`}
 		>
 			{/* Coordinated loading skeleton */}
@@ -413,6 +422,7 @@ export function Organization() {
 						<div className="mb-8 flex items-start justify-between">
 							<div>
 								<button
+									type="button"
 									onClick={() => navigate('/dashboard')}
 									className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors mb-1 flex items-center gap-1"
 								>
@@ -420,20 +430,26 @@ export function Organization() {
 								</button>
 								<h1 className="text-2xl font-semibold text-[var(--foreground)] flex items-center gap-2">
 									{orgName}
-									{isLoading.info ? (
+									{isLoading.overview ? (
 										<Spinner size="sm" />
-									) : info ? (
+									) : overview ? (
 										<Badge variant="success">Connected</Badge>
 									) : error ? (
 										<Badge variant="error">Error</Badge>
 									) : null}
 								</h1>
-								{info?.description && (
-									<p className="text-sm text-[var(--muted)] mt-1">{info.description}</p>
+								{overview?.description && (
+									<p className="text-sm text-[var(--muted)] mt-1">{overview.description}</p>
 								)}
 								{isUsingCachedData && cacheAge && (
 									<p className="text-xs text-[var(--color-warning)] mt-1 flex items-center gap-1">
-										<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg
+											aria-hidden="true"
+											className="w-3 h-3"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
 											<path
 												strokeLinecap="round"
 												strokeLinejoin="round"
@@ -461,6 +477,7 @@ export function Organization() {
 											aria-label="Pro features available"
 										>
 											<svg
+												aria-hidden="true"
 												className="w-2.5 h-2.5"
 												fill="none"
 												stroke="currentColor"
@@ -500,12 +517,14 @@ export function Organization() {
 										{showExportMenu && (
 											<div className="absolute right-0 top-full mt-1 py-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg z-10 min-w-[120px]">
 												<button
+													type="button"
 													className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
 													onClick={() => handleExport('csv')}
 												>
 													Export CSV
 												</button>
 												<button
+													type="button"
 													className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
 													onClick={() => handleExport('json')}
 												>
@@ -524,7 +543,12 @@ export function Organization() {
 								<Card.Content>
 									<p className="text-[var(--color-error)] text-sm">{error}</p>
 									{!notFound && (
-										<Button variant="secondary" size="sm" className="mt-2" onClick={fetchAll}>
+										<Button
+											variant="secondary"
+											size="sm"
+											className="mt-2"
+											onClick={() => fetchAll()}
+										>
 											Retry
 										</Button>
 									)}
@@ -542,23 +566,19 @@ export function Organization() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
 										{suggestions.map((org) => (
 											<button
+												type="button"
 												key={org.login}
 												onClick={() => navigate(`/org/${org.login}`)}
 												className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card-hover)] transition-all text-left"
 											>
 												<img
-													src={org.avatar_url}
+													src={org.avatarUrl}
 													alt={org.login}
 													loading="lazy"
 													className="w-10 h-10 rounded-lg"
 												/>
 												<div className="flex-1 min-w-0">
 													<p className="text-sm font-medium truncate">{org.login}</p>
-													{org.description && (
-														<p className="text-xs text-[var(--muted)] truncate">
-															{org.description}
-														</p>
-													)}
 												</div>
 											</button>
 										))}
@@ -568,9 +588,8 @@ export function Organization() {
 						)}
 
 						{/* Stats grid */}
-						<div
+						<section
 							className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
-							role="region"
 							aria-label="Primary statistics"
 							aria-live="polite"
 						>
@@ -591,30 +610,29 @@ export function Organization() {
 							/>
 							<Stat
 								label="Repositories"
-								value={isLoading.repos ? '...' : repos.length || info?.public_repos || '—'}
+								value={isLoading.overview ? '...' : overview?.repositoryCount || '—'}
 								description="Total repos"
 							/>
-						</div>
+						</section>
 
 						{/* Secondary stats */}
-						<div
+						<section
 							className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
-							role="region"
 							aria-label="Secondary statistics"
 						>
 							<Stat
 								label="Members"
-								value={isLoading.members ? '...' : members.length || '—'}
+								value={isLoading.overview ? '...' : overview?.memberCount || '—'}
 								description="Organization members"
 							/>
 							<Stat
 								label="Teams"
-								value={isLoading.teams ? '...' : teams.length || '—'}
+								value={isLoading.overview ? '...' : teams.length || '—'}
 								description="Active teams"
 							/>
 							<Stat
 								label="Contributors"
-								value={isLoading.commits ? '...' : commitStats.length || '—'}
+								value={isLoading.commits ? '...' : contributorCount || '—'}
 								description="Active contributors"
 							/>
 							<Stat
@@ -622,13 +640,13 @@ export function Organization() {
 								value={
 									isLoading.commits
 										? '...'
-										: commitStats.length > 0
-											? Math.round(totalCommits / commitStats.length)
+										: contributorCount > 0
+											? Math.round(totalCommits / contributorCount)
 											: '—'
 								}
 								description={getTimeframeLabel(timeframe)}
 							/>
-						</div>
+						</section>
 
 						{/* Content grid */}
 						<div className="grid lg:grid-cols-2 gap-8 flex-1">
@@ -645,12 +663,15 @@ export function Organization() {
 													: 'Issues'}
 											)
 										</h2>
-										{(isLoading.commits || isLoading.prs || isLoading.issues) && (
-											<Spinner size="sm" />
-										)}
+										{isActivityLoading && <Spinner size="sm" />}
 									</div>
 								</Card.Header>
-								<Card.Content className="flex-1 p-0">{renderContributorTable()}</Card.Content>
+								<Card.Content className="flex-1 p-0">
+									{renderContributorTable()}
+									{truncationNote && (
+										<p className="px-4 py-2 text-xs text-[var(--muted)]">{truncationNote}</p>
+									)}
+								</Card.Content>
 							</Card>
 
 							{/* Teams */}
@@ -658,11 +679,11 @@ export function Organization() {
 								<Card.Header>
 									<div className="flex items-center justify-between">
 										<h2 className="text-lg font-medium">Teams</h2>
-										{isLoading.teams && <Spinner size="sm" />}
+										{isLoading.overview && <Spinner size="sm" />}
 									</div>
 								</Card.Header>
 								<Card.Content className="flex-1 p-0">
-									{isLoading.teams && teams.length === 0 ? (
+									{isLoading.overview && teams.length === 0 ? (
 										<div className="flex items-center justify-center h-32">
 											<Spinner />
 										</div>
@@ -686,11 +707,11 @@ export function Organization() {
 													<Table.Row key={team.id}>
 														<Table.Cell className="font-medium">{team.name}</Table.Cell>
 														<Table.Cell>
-															<Badge variant={team.privacy === 'secret' ? 'warning' : 'success'}>
-																{team.privacy}
+															<Badge variant={team.privacy === 'SECRET' ? 'warning' : 'success'}>
+																{team.privacy === 'SECRET' ? 'secret' : 'visible'}
 															</Badge>
 														</Table.Cell>
-														<Table.Cell className="text-right">{team.members_count}</Table.Cell>
+														<Table.Cell className="text-right">{team.memberCount}</Table.Cell>
 													</Table.Row>
 												))}
 											</Table.Body>
@@ -702,6 +723,6 @@ export function Organization() {
 					</motion.div>
 				)}
 			</AnimatePresence>
-		</div>
+		</section>
 	)
 }

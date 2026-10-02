@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { API_BASE } from '../lib/api'
 
 interface LicenseState {
 	licenseKey: string | null
@@ -13,11 +14,6 @@ interface LicenseState {
 	validateLicense: () => Promise<boolean>
 	clearLicense: () => void
 }
-
-// Server-side validation endpoint (cannot be bypassed)
-const API_BASE = import.meta.env.PROD
-	? 'https://specto.darkroom.engineering'
-	: 'http://localhost:3000'
 
 // Dev mode bypass requires a special env var (not just running in dev)
 // This prevents cloning the repo and getting Pro features for free
@@ -161,7 +157,6 @@ export async function exportData(
 			issues: number
 			contributors: number
 			repositories: number
-			stars: number
 		}
 		period: string
 	}
