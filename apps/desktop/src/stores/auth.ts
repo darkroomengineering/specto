@@ -1,5 +1,5 @@
-import { create } from 'zustand'
 import { Command } from '@tauri-apps/plugin-shell'
+import { create } from 'zustand'
 
 // Try multiple paths for gh CLI (macOS GUI apps don't inherit terminal PATH)
 const GH_TOKEN_COMMANDS = [
@@ -8,11 +8,7 @@ const GH_TOKEN_COMMANDS = [
 	'gh-auth-token', // gh in PATH (fallback)
 ]
 
-const GH_LOGIN_COMMANDS = [
-	'gh-auth-login-homebrew',
-	'gh-auth-login-local',
-	'gh-auth-login',
-]
+const GH_LOGIN_COMMANDS = ['gh-auth-login-homebrew', 'gh-auth-login-local', 'gh-auth-login']
 
 // Try executing gh auth token with multiple paths
 async function tryGetToken(): Promise<{ token: string; commandIndex: number } | null> {

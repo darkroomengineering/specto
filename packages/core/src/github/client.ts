@@ -1,17 +1,17 @@
-import { getToken } from './auth'
 import type {
-	Organization,
-	Member,
-	Repository,
-	Commit,
-	Team,
-	Webhook,
-	AuditLogEntry,
 	ActionsSettings,
-	Runner,
+	AuditLogEntry,
+	Commit,
+	Member,
+	Organization,
 	OrgSecret,
 	PaginationOptions,
+	Repository,
+	Runner,
+	Team,
+	Webhook,
 } from '../types'
+import { getToken } from './auth'
 
 const BASE_URL = 'https://api.github.com'
 
@@ -69,7 +69,7 @@ async function githubFetch<T>(endpoint: string, options: FetchOptions = {}): Pro
 	if (!response.ok) {
 		const resetHeader = response.headers.get('x-ratelimit-reset')
 		if (response.status === 403 && resetHeader) {
-			const resetAt = new Date(Number.parseInt(resetHeader) * 1000)
+			const resetAt = new Date(Number.parseInt(resetHeader, 10) * 1000)
 			throw new RateLimitError(resetAt, await response.text())
 		}
 		throw new GitHubError(response.status, response.statusText, await response.text())
@@ -126,7 +126,10 @@ export async function* getOrgMembers(
 	yield* paginate<Member>(`/orgs/${org}/members`, options)
 }
 
-export async function getOrgMembersList(org: string, options?: PaginationOptions): Promise<Member[]> {
+export async function getOrgMembersList(
+	org: string,
+	options?: PaginationOptions
+): Promise<Member[]> {
 	return collectPaginated<Member>(`/orgs/${org}/members`, options)
 }
 
@@ -182,7 +185,9 @@ export async function getActionsSettings(org: string): Promise<ActionsSettings> 
 	return githubFetch<ActionsSettings>(`/orgs/${org}/actions/permissions`)
 }
 
-export async function getOrgRunners(org: string): Promise<{ total_count: number; runners: Runner[] }> {
+export async function getOrgRunners(
+	org: string
+): Promise<{ total_count: number; runners: Runner[] }> {
 	return githubFetch<{ total_count: number; runners: Runner[] }>(`/orgs/${org}/actions/runners`)
 }
 
@@ -194,7 +199,12 @@ export async function getOrgSecrets(
 
 export async function* getAuditLog(
 	org: string,
-	options: PaginationOptions & { phrase?: string; include?: string; after?: string; before?: string } = {}
+	options: PaginationOptions & {
+		phrase?: string
+		include?: string
+		after?: string
+		before?: string
+	} = {}
 ): AsyncGenerator<AuditLogEntry, void, unknown> {
 	const { phrase, include, after, before, ...paginationOptions } = options
 	yield* paginate<AuditLogEntry>(`/orgs/${org}/audit-log`, {

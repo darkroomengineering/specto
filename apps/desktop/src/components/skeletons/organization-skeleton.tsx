@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'motion/react'
-import { Skeleton, Card } from '@specto/ui'
+import { Card, Skeleton } from '@specto/ui'
+import { AnimatePresence, motion } from 'motion/react'
 
 interface OrganizationSkeletonProps {
 	isVisible: boolean
@@ -106,15 +106,26 @@ function TableSkeleton({ rows, columns }: TableSkeletonProps) {
 			<div className="flex items-center px-4 py-3 border-b border-[var(--border)]">
 				{Array.from({ length: columns }).map((_, i) => (
 					<div key={`header-${i}`} className={i === 0 ? 'flex-1' : 'w-20 text-right'}>
-						<Skeleton variant="text" width={i === 0 ? 60 : 40} height={12} className={i !== 0 ? 'ml-auto' : ''} />
+						<Skeleton
+							variant="text"
+							width={i === 0 ? 60 : 40}
+							height={12}
+							className={i !== 0 ? 'ml-auto' : ''}
+						/>
 					</div>
 				))}
 			</div>
 			{/* Rows */}
 			{Array.from({ length: rows }).map((_, rowIndex) => (
-				<div key={`row-${rowIndex}`} className="flex items-center px-4 py-3 border-b border-[var(--border)] last:border-b-0">
+				<div
+					key={`row-${rowIndex}`}
+					className="flex items-center px-4 py-3 border-b border-[var(--border)] last:border-b-0"
+				>
 					{Array.from({ length: columns }).map((_, colIndex) => (
-						<div key={`cell-${rowIndex}-${colIndex}`} className={colIndex === 0 ? 'flex-1' : 'w-20 text-right'}>
+						<div
+							key={`cell-${rowIndex}-${colIndex}`}
+							className={colIndex === 0 ? 'flex-1' : 'w-20 text-right'}
+						>
 							<Skeleton
 								variant="text"
 								width={colIndex === 0 ? 100 + Math.random() * 40 : 30 + Math.random() * 20}

@@ -1,7 +1,7 @@
 'use client'
 
-import type { HTMLAttributes, ReactNode } from 'react'
 import { motion, useSpring, useTransform } from 'motion/react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { useEffect } from 'react'
 import { cn } from '../../utils/cn'
 
@@ -82,9 +82,7 @@ export function Stat({
 				{icon && <span className="text-[var(--muted)]">{icon}</span>}
 			</div>
 			<div className="flex items-baseline gap-2">
-				<span className="text-2xl font-semibold text-[var(--foreground)]">
-					{renderValue()}
-				</span>
+				<span className="text-2xl font-semibold text-[var(--foreground)]">{renderValue()}</span>
 				{trend && (
 					<span
 						className={cn(
@@ -92,13 +90,12 @@ export function Stat({
 							trend.isPositive ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'
 						)}
 					>
-						{trend.isPositive ? '+' : ''}{trend.value}%
+						{trend.isPositive ? '+' : ''}
+						{trend.value}%
 					</span>
 				)}
 			</div>
-			{description && (
-				<span className="text-xs text-[var(--muted)]">{description}</span>
-			)}
+			{description && <span className="text-xs text-[var(--muted)]">{description}</span>}
 		</>
 	)
 

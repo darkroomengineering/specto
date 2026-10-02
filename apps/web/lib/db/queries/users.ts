@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { db, users, type NewUser, type User } from '../index'
+import { db, type NewUser, type User, users } from '../index'
 
 export async function findUserByEmail(email: string): Promise<User | undefined> {
 	return db.query.users.findFirst({
@@ -7,9 +7,7 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
 	})
 }
 
-export async function findUserByPolarCustomerId(
-	customerId: string
-): Promise<User | undefined> {
+export async function findUserByPolarCustomerId(customerId: string): Promise<User | undefined> {
 	return db.query.users.findFirst({
 		where: eq(users.polarCustomerId, customerId),
 	})
@@ -21,9 +19,7 @@ export async function findUserById(id: string): Promise<User | undefined> {
 	})
 }
 
-export async function createUser(
-	data: Omit<NewUser, 'createdAt' | 'updatedAt'>
-): Promise<User> {
+export async function createUser(data: Omit<NewUser, 'createdAt' | 'updatedAt'>): Promise<User> {
 	const now = new Date()
 	const result = await db
 		.insert(users)
@@ -41,24 +37,12 @@ export async function createUser(
 	return user
 }
 
-export async function updateUserProStatus(
-	userId: string,
-	isPro: boolean
-): Promise<void> {
-	await db
-		.update(users)
-		.set({ isPro, updatedAt: new Date() })
-		.where(eq(users.id, userId))
+export async function updateUserProStatus(userId: string, isPro: boolean): Promise<void> {
+	await db.update(users).set({ isPro, updatedAt: new Date() }).where(eq(users.id, userId))
 }
 
-export async function linkPolarCustomerId(
-	userId: string,
-	polarCustomerId: string
-): Promise<void> {
-	await db
-		.update(users)
-		.set({ polarCustomerId, updatedAt: new Date() })
-		.where(eq(users.id, userId))
+export async function linkPolarCustomerId(userId: string, polarCustomerId: string): Promise<void> {
+	await db.update(users).set({ polarCustomerId, updatedAt: new Date() }).where(eq(users.id, userId))
 }
 
 export async function findOrCreateUserByEmail(

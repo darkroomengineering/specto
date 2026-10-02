@@ -33,10 +33,7 @@ interface ErrorBoundaryState {
  * </ErrorBoundary>
  * ```
  */
-export class ErrorBoundary extends Component<
-	ErrorBoundaryProps,
-	ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 	constructor(props: ErrorBoundaryProps) {
 		super(props)
 		this.state = { hasError: false, error: null }
@@ -121,9 +118,7 @@ function ErrorFallback({
 			</div>
 
 			{/* Error Message */}
-			<h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
-				{errorMessage}
-			</h3>
+			<h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">{errorMessage}</h3>
 
 			{/* Error Details (shown only if error available) */}
 			{error && (

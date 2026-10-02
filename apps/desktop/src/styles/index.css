@@ -8,44 +8,46 @@
 
 /* Desktop-specific styles */
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+html,
+body,
+#root {
+	height: 100%;
+	margin: 0;
+	padding: 0;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: var(--background);
-  color: var(--foreground);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	font-family: var(--font-sans);
+	background-color: var(--background);
+	color: var(--foreground);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+	width: 8px;
+	height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+	background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+	background: var(--border);
+	border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+	background: var(--muted);
 }
 
 /* Tauri drag region for custom title bar */
 .drag-region {
-  -webkit-app-region: drag;
+	-webkit-app-region: drag;
 }
 
 .no-drag {
-  -webkit-app-region: no-drag;
+	-webkit-app-region: no-drag;
 }

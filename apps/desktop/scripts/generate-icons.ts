@@ -5,8 +5,8 @@
  * Run: bun run apps/desktop/scripts/generate-icons.ts
  */
 
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 async function main() {
 	const sourceIcon = join(import.meta.dir, '../../web/app/icon.png')

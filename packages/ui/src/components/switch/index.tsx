@@ -1,8 +1,8 @@
 'use client'
 
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { motion } from 'motion/react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { forwardRef } from 'react'
 import { cn } from '../../utils/cn'
 
@@ -32,7 +32,8 @@ const sizeClasses = {
 // Switch Component
 // =============================================================================
 
-export interface SwitchProps extends Omit<ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>, 'children'> {
+export interface SwitchProps
+	extends Omit<ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>, 'children'> {
 	size?: 'sm' | 'md' | 'lg'
 	label?: ReactNode
 	labelPosition?: 'left' | 'right'
@@ -60,10 +61,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
 			>
 				<SwitchPrimitive.Thumb asChild>
 					<motion.span
-						className={cn(
-							'pointer-events-none block rounded-full bg-white shadow-sm',
-							sizes.thumb
-						)}
+						className={cn('pointer-events-none block rounded-full bg-white shadow-sm', sizes.thumb)}
 						layout
 						transition={{
 							type: 'spring',

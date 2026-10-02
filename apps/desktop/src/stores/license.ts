@@ -192,11 +192,12 @@ export async function exportData(
 		}
 
 		const blob = await response.blob()
-		const filename = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1]
-			|| `specto-export.${format}`
+		const filename =
+			response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ||
+			`specto-export.${format}`
 
 		return { success: true, blob, filename }
-	} catch (err) {
+	} catch (_err) {
 		return { success: false, error: 'Export service unavailable' }
 	}
 }

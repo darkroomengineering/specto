@@ -1,4 +1,4 @@
-import type { ReactNode, HTMLAttributes } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '../../utils/cn'
 import { Button } from '../button'
 
@@ -72,9 +72,7 @@ export function ProGate({
 				}}
 				{...props}
 			>
-				<div className="opacity-50 pointer-events-none select-none">
-					{children}
-				</div>
+				<div className="opacity-50 pointer-events-none select-none">{children}</div>
 			</div>
 		)
 	}
@@ -82,18 +80,14 @@ export function ProGate({
 	// Overlay mode - show with blur and upgrade prompt
 	return (
 		<div className={cn('relative', className)} {...props}>
-			<div className="blur-sm opacity-60 pointer-events-none select-none">
-				{children}
-			</div>
+			<div className="blur-sm opacity-60 pointer-events-none select-none">{children}</div>
 			<div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/60 backdrop-blur-[2px] rounded-lg">
 				<div className="text-center p-4">
 					<div className="flex items-center justify-center gap-1.5 mb-2">
 						<LockIcon className="w-4 h-4 text-[var(--accent)]" />
 						<span className="text-sm font-medium">Pro Feature</span>
 					</div>
-					<p className="text-xs text-[var(--muted)] mb-3">
-						Unlock {feature} with Pro
-					</p>
+					<p className="text-xs text-[var(--muted)] mb-3">Unlock {feature} with Pro</p>
 					<Button size="sm" onClick={onUpgrade}>
 						Upgrade to Pro
 					</Button>

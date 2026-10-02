@@ -4,9 +4,9 @@
  * Run this before building to ensure all version numbers match
  */
 
-import { readFileSync, writeFileSync } from 'fs'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = join(__dirname, '..')
@@ -22,7 +22,7 @@ const tauriConfPath = join(rootDir, 'src-tauri', 'tauri.conf.json')
 const tauriConf = JSON.parse(readFileSync(tauriConfPath, 'utf-8'))
 if (tauriConf.version !== version) {
 	tauriConf.version = version
-	writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, '  ') + '\n')
+	writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, '  ')}\n`)
 	console.log(`  ✓ Updated tauri.conf.json`)
 } else {
 	console.log(`  ✓ tauri.conf.json already up to date`)

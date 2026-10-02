@@ -1,17 +1,17 @@
-import { create } from 'zustand'
-import { useAuthStore } from './auth'
 // Use browser-safe imports (no Node.js modules)
 import {
-	type Organization,
-	type Member,
-	type Team,
-	type Repository,
+	batchProcess,
 	type CommitStats,
+	deduplicatedFetch,
+	type Member,
 	// Caching utilities
 	MemoryCache,
-	deduplicatedFetch,
-	batchProcess,
+	type Organization,
+	type Repository,
+	type Team,
 } from '@specto/core/browser'
+import { create } from 'zustand'
+import { useAuthStore } from './auth'
 
 export type Timeframe = '7d' | '30d' | '90d' | 'ytd' | 'all'
 export type MetricType = 'commits' | 'prs' | 'issues' | 'reviews'
@@ -323,27 +323,24 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 		}
 
 		try {
-			const info = await cachedGitHubFetch<Organization>(
-				`org:${currentOrg}`,
-				async () => {
-					const response = await fetch(`https://api.github.com/orgs/${currentOrg}`, {
-						headers: {
-							Authorization: `Bearer ${token}`,
-							Accept: 'application/vnd.github+json',
-						},
-					})
+			const info = await cachedGitHubFetch<Organization>(`org:${currentOrg}`, async () => {
+				const response = await fetch(`https://api.github.com/orgs/${currentOrg}`, {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						Accept: 'application/vnd.github+json',
+					},
+				})
 
-					if (response.status === 404) {
-						throw new Error('NOT_FOUND')
-					}
-
-					if (!response.ok) {
-						throw new Error(`GitHub API error: ${response.status}`)
-					}
-
-					return response.json() as Promise<Organization>
+				if (response.status === 404) {
+					throw new Error('NOT_FOUND')
 				}
-			)
+
+				if (!response.ok) {
+					throw new Error(`GitHub API error: ${response.status}`)
+				}
+
+				return response.json() as Promise<Organization>
+			})
 
 			set((s) => ({
 				orgData: { ...s.orgData, info },
@@ -406,9 +403,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 			const token = await useAuthStore.getState().getToken()
 			if (!token) throw new Error('Not authenticated')
 
-			const members = await cachedGitHubFetch<Member[]>(
-				`members:${currentOrg}`,
-				() => fetchAllPages<Member>(`/orgs/${currentOrg}/members`, token, {}, 10)
+			const members = await cachedGitHubFetch<Member[]>(`members:${currentOrg}`, () =>
+				fetchAllPages<Member>(`/orgs/${currentOrg}/members`, token, {}, 10)
 			)
 
 			set((s) => ({
@@ -429,9 +425,8 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 			const token = await useAuthStore.getState().getToken()
 			if (!token) throw new Error('Not authenticated')
 
-			const teams = await cachedGitHubFetch<Team[]>(
-				`teams:${currentOrg}`,
-				() => fetchAllPages<Team>(`/orgs/${currentOrg}/teams`, token, {}, 10)
+			const teams = await cachedGitHubFetch<Team[]>(`teams:${currentOrg}`, () =>
+				fetchAllPages<Team>(`/orgs/${currentOrg}/teams`, token, {}, 10)
 			)
 
 			set((s) => ({
@@ -452,15 +447,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 			const token = await useAuthStore.getState().getToken()
 			if (!token) throw new Error('Not authenticated')
 
-			const repos = await cachedGitHubFetch<Repository[]>(
-				`repos:${currentOrg}`,
-				() =>
-					fetchAllPages<Repository>(
-						`/orgs/${currentOrg}/repos`,
-						token,
-						{ type: 'all', sort: 'pushed' },
-						10
-					)
+			const repos = await cachedGitHubFetch<Repository[]>(`repos:${currentOrg}`, () =>
+				fetchAllPages<Repository>(
+					`/orgs/${currentOrg}/repos`,
+					token,
+					{ type: 'all', sort: 'pushed' },
+					10
+				)
 			)
 
 			set((s) => ({
@@ -485,15 +478,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 			// Get repos first if not loaded
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
+				repos = await cachedGitHubFetch<Repository[]>(`repos:${currentOrg}`, () =>
+					fetchAllPages<Repository>(
+						`/orgs/${currentOrg}/repos`,
+						token,
+						{ type: 'all', sort: 'pushed' },
+						10
+					)
 				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
@@ -556,15 +547,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
+				repos = await cachedGitHubFetch<Repository[]>(`repos:${currentOrg}`, () =>
+					fetchAllPages<Repository>(
+						`/orgs/${currentOrg}/repos`,
+						token,
+						{ type: 'all', sort: 'pushed' },
+						10
+					)
 				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
@@ -634,15 +623,13 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 
 			let repos = orgData.repos
 			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
+				repos = await cachedGitHubFetch<Repository[]>(`repos:${currentOrg}`, () =>
+					fetchAllPages<Repository>(
+						`/orgs/${currentOrg}/repos`,
+						token,
+						{ type: 'all', sort: 'pushed' },
+						10
+					)
 				)
 				set((s) => ({ orgData: { ...s.orgData, repos } }))
 			}
@@ -663,12 +650,7 @@ export const useGitHubStore = create<GitHubState>((set, get) => ({
 							state: string
 							created_at: string
 							pull_request?: unknown
-						}>(
-							`/repos/${repo.full_name}/issues`,
-							token,
-							{ state: 'all', since },
-							3
-						)
+						}>(`/repos/${repo.full_name}/issues`, token, { state: 'all', since }, 3)
 
 						for (const issue of issues) {
 							// Skip pull requests (they show up in issues endpoint too)

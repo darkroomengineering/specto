@@ -20,10 +20,22 @@ export type LeaderboardCategory =
 	| 'databases'
 	| 'rising-stars'
 
-export const LEADERBOARD_CATEGORIES: { value: LeaderboardCategory; label: string; description: string }[] = [
-	{ value: 'developer-favorites', label: 'Developer Favorites', description: 'Tools developers love and use daily' },
+export const LEADERBOARD_CATEGORIES: {
+	value: LeaderboardCategory
+	label: string
+	description: string
+}[] = [
+	{
+		value: 'developer-favorites',
+		label: 'Developer Favorites',
+		description: 'Tools developers love and use daily',
+	},
 	{ value: 'frameworks', label: 'Frameworks', description: 'Web frameworks and meta-frameworks' },
-	{ value: 'databases', label: 'Databases & Infra', description: 'Database tools and infrastructure' },
+	{
+		value: 'databases',
+		label: 'Databases & Infra',
+		description: 'Database tools and infrastructure',
+	},
 	{ value: 'rising-stars', label: 'Rising Stars', description: 'Fast-growing projects to watch' },
 ]
 
@@ -41,7 +53,7 @@ const CATEGORY_ORGS: Record<LeaderboardCategory, string[]> = {
 		'withastro',
 		'sveltejs',
 	],
-	'frameworks': [
+	frameworks: [
 		'vercel', // Next.js
 		'remix-run',
 		'withastro',
@@ -53,7 +65,7 @@ const CATEGORY_ORGS: Record<LeaderboardCategory, string[]> = {
 		'angular',
 		'vuejs',
 	],
-	'databases': [
+	databases: [
 		'supabase',
 		'planetscale',
 		'drizzle-team',
@@ -146,8 +158,10 @@ async function fetchOrgDetails(orgLogin: string): Promise<OrgStats | null> {
 		if (reposRes.ok) {
 			const repos = await reposRes.json()
 			if (Array.isArray(repos)) {
-				totalStars = repos.reduce((sum: number, r: { stargazers_count?: number }) =>
-					sum + (r.stargazers_count || 0), 0)
+				totalStars = repos.reduce(
+					(sum: number, r: { stargazers_count?: number }) => sum + (r.stargazers_count || 0),
+					0
+				)
 			}
 		}
 
@@ -170,16 +184,16 @@ async function fetchOrgDetails(orgLogin: string): Promise<OrgStats | null> {
  * Calculate activity scores for orgs
  */
 function calculateScores(orgs: OrgStats[]): OrgStats[] {
-	const starsPerRepo = orgs.map(o => o.repos > 0 ? o.stars / o.repos : 0)
+	const starsPerRepo = orgs.map((o) => (o.repos > 0 ? o.stars / o.repos : 0))
 	const maxStarsPerRepo = Math.max(...starsPerRepo, 1)
-	const maxFollowers = Math.max(...orgs.map(o => o.followers), 1)
+	const maxFollowers = Math.max(...orgs.map((o) => o.followers), 1)
 
 	return orgs.map((org, i) => ({
 		...org,
 		activityScore: Math.round(
-			(((starsPerRepo[i] ?? 0) / maxStarsPerRepo) * 70) + // 70% stars-per-repo
-			((org.followers / maxFollowers) * 30) // 30% followers
-		)
+			((starsPerRepo[i] ?? 0) / maxStarsPerRepo) * 70 + // 70% stars-per-repo
+				(org.followers / maxFollowers) * 30 // 30% followers
+		),
 	}))
 }
 
@@ -212,45 +226,201 @@ async function fetchLeaderboardData(category: LeaderboardCategory): Promise<OrgS
  * Get leaderboard data with Next.js caching (ISR)
  * Caches data for 30 minutes, revalidates in background
  */
-export const getLeaderboardData = unstable_cache(
-	fetchLeaderboardData,
-	['leaderboard'],
-	{
-		revalidate: 1800, // 30 minutes
-		tags: ['leaderboard'],
-	}
-)
+export const getLeaderboardData = unstable_cache(fetchLeaderboardData, ['leaderboard'], {
+	revalidate: 1800, // 30 minutes
+	tags: ['leaderboard'],
+})
 
 // Fallback data per category
 function getFallbackData(category: LeaderboardCategory): OrgStats[] {
 	const fallbacks: Record<LeaderboardCategory, OrgStats[]> = {
 		'developer-favorites': [
-			{ name: 'tailwindlabs', avatarUrl: 'https://avatars.githubusercontent.com/u/67109815', description: 'Creators of Tailwind CSS', repos: 35, followers: 12400, stars: 180000, activityScore: 100 },
-			{ name: 'vercel', avatarUrl: 'https://avatars.githubusercontent.com/u/14985020', description: 'Develop. Preview. Ship.', repos: 156, followers: 8900, stars: 150000, activityScore: 92 },
-			{ name: 'supabase', avatarUrl: 'https://avatars.githubusercontent.com/u/54469796', description: 'The open source Firebase alternative', repos: 89, followers: 5600, stars: 85000, activityScore: 85 },
-			{ name: 'oven-sh', avatarUrl: 'https://avatars.githubusercontent.com/u/108928776', description: 'Bun — a fast all-in-one JavaScript runtime', repos: 12, followers: 3200, stars: 72000, activityScore: 78 },
-			{ name: 'prisma', avatarUrl: 'https://avatars.githubusercontent.com/u/17219288', description: 'Next-generation ORM for Node.js and TypeScript', repos: 78, followers: 4100, stars: 45000, activityScore: 71 },
+			{
+				name: 'tailwindlabs',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/67109815',
+				description: 'Creators of Tailwind CSS',
+				repos: 35,
+				followers: 12400,
+				stars: 180000,
+				activityScore: 100,
+			},
+			{
+				name: 'vercel',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/14985020',
+				description: 'Develop. Preview. Ship.',
+				repos: 156,
+				followers: 8900,
+				stars: 150000,
+				activityScore: 92,
+			},
+			{
+				name: 'supabase',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/54469796',
+				description: 'The open source Firebase alternative',
+				repos: 89,
+				followers: 5600,
+				stars: 85000,
+				activityScore: 85,
+			},
+			{
+				name: 'oven-sh',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/108928776',
+				description: 'Bun — a fast all-in-one JavaScript runtime',
+				repos: 12,
+				followers: 3200,
+				stars: 72000,
+				activityScore: 78,
+			},
+			{
+				name: 'prisma',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/17219288',
+				description: 'Next-generation ORM for Node.js and TypeScript',
+				repos: 78,
+				followers: 4100,
+				stars: 45000,
+				activityScore: 71,
+			},
 		],
-		'frameworks': [
-			{ name: 'sveltejs', avatarUrl: 'https://avatars.githubusercontent.com/u/23617963', description: 'Cybernetically enhanced web apps', repos: 45, followers: 7200, stars: 95000, activityScore: 100 },
-			{ name: 'vercel', avatarUrl: 'https://avatars.githubusercontent.com/u/14985020', description: 'Develop. Preview. Ship.', repos: 156, followers: 8900, stars: 150000, activityScore: 95 },
-			{ name: 'withastro', avatarUrl: 'https://avatars.githubusercontent.com/u/44914786', description: 'The web framework for content-driven websites', repos: 52, followers: 2800, stars: 48000, activityScore: 88 },
-			{ name: 'remix-run', avatarUrl: 'https://avatars.githubusercontent.com/u/64235328', description: 'Build Better Websites', repos: 34, followers: 2100, stars: 32000, activityScore: 82 },
-			{ name: 'solidjs', avatarUrl: 'https://avatars.githubusercontent.com/u/79226042', description: 'A declarative, efficient, and flexible JavaScript library', repos: 28, followers: 1500, stars: 35000, activityScore: 76 },
+		frameworks: [
+			{
+				name: 'sveltejs',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/23617963',
+				description: 'Cybernetically enhanced web apps',
+				repos: 45,
+				followers: 7200,
+				stars: 95000,
+				activityScore: 100,
+			},
+			{
+				name: 'vercel',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/14985020',
+				description: 'Develop. Preview. Ship.',
+				repos: 156,
+				followers: 8900,
+				stars: 150000,
+				activityScore: 95,
+			},
+			{
+				name: 'withastro',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/44914786',
+				description: 'The web framework for content-driven websites',
+				repos: 52,
+				followers: 2800,
+				stars: 48000,
+				activityScore: 88,
+			},
+			{
+				name: 'remix-run',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/64235328',
+				description: 'Build Better Websites',
+				repos: 34,
+				followers: 2100,
+				stars: 32000,
+				activityScore: 82,
+			},
+			{
+				name: 'solidjs',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/79226042',
+				description: 'A declarative, efficient, and flexible JavaScript library',
+				repos: 28,
+				followers: 1500,
+				stars: 35000,
+				activityScore: 76,
+			},
 		],
-		'databases': [
-			{ name: 'supabase', avatarUrl: 'https://avatars.githubusercontent.com/u/54469796', description: 'The open source Firebase alternative', repos: 89, followers: 5600, stars: 85000, activityScore: 100 },
-			{ name: 'drizzle-team', avatarUrl: 'https://avatars.githubusercontent.com/u/108468352', description: 'TypeScript ORM that feels like writing SQL', repos: 15, followers: 1800, stars: 28000, activityScore: 92 },
-			{ name: 'prisma', avatarUrl: 'https://avatars.githubusercontent.com/u/17219288', description: 'Next-generation ORM for Node.js and TypeScript', repos: 78, followers: 4100, stars: 45000, activityScore: 85 },
-			{ name: 'neondatabase', avatarUrl: 'https://avatars.githubusercontent.com/u/77690634', description: 'Serverless Postgres', repos: 42, followers: 1200, stars: 18000, activityScore: 78 },
-			{ name: 'turso-tech', avatarUrl: 'https://avatars.githubusercontent.com/u/139192399', description: 'SQLite for Production', repos: 28, followers: 800, stars: 12000, activityScore: 71 },
+		databases: [
+			{
+				name: 'supabase',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/54469796',
+				description: 'The open source Firebase alternative',
+				repos: 89,
+				followers: 5600,
+				stars: 85000,
+				activityScore: 100,
+			},
+			{
+				name: 'drizzle-team',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/108468352',
+				description: 'TypeScript ORM that feels like writing SQL',
+				repos: 15,
+				followers: 1800,
+				stars: 28000,
+				activityScore: 92,
+			},
+			{
+				name: 'prisma',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/17219288',
+				description: 'Next-generation ORM for Node.js and TypeScript',
+				repos: 78,
+				followers: 4100,
+				stars: 45000,
+				activityScore: 85,
+			},
+			{
+				name: 'neondatabase',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/77690634',
+				description: 'Serverless Postgres',
+				repos: 42,
+				followers: 1200,
+				stars: 18000,
+				activityScore: 78,
+			},
+			{
+				name: 'turso-tech',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/139192399',
+				description: 'SQLite for Production',
+				repos: 28,
+				followers: 800,
+				stars: 12000,
+				activityScore: 71,
+			},
 		],
 		'rising-stars': [
-			{ name: 'oven-sh', avatarUrl: 'https://avatars.githubusercontent.com/u/108928776', description: 'Bun — a fast all-in-one JavaScript runtime', repos: 12, followers: 3200, stars: 72000, activityScore: 100 },
-			{ name: 'biomejs', avatarUrl: 'https://avatars.githubusercontent.com/u/140182857', description: 'One toolchain for your web project', repos: 8, followers: 1500, stars: 16000, activityScore: 95 },
-			{ name: 'drizzle-team', avatarUrl: 'https://avatars.githubusercontent.com/u/108468352', description: 'TypeScript ORM that feels like writing SQL', repos: 15, followers: 1800, stars: 28000, activityScore: 88 },
-			{ name: 'honojs', avatarUrl: 'https://avatars.githubusercontent.com/u/98495527', description: 'Ultrafast web framework for the Edges', repos: 24, followers: 1100, stars: 22000, activityScore: 82 },
-			{ name: 'effect-ts', avatarUrl: 'https://avatars.githubusercontent.com/u/132182030', description: 'A powerful TypeScript framework', repos: 18, followers: 600, stars: 8500, activityScore: 75 },
+			{
+				name: 'oven-sh',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/108928776',
+				description: 'Bun — a fast all-in-one JavaScript runtime',
+				repos: 12,
+				followers: 3200,
+				stars: 72000,
+				activityScore: 100,
+			},
+			{
+				name: 'biomejs',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/140182857',
+				description: 'One toolchain for your web project',
+				repos: 8,
+				followers: 1500,
+				stars: 16000,
+				activityScore: 95,
+			},
+			{
+				name: 'drizzle-team',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/108468352',
+				description: 'TypeScript ORM that feels like writing SQL',
+				repos: 15,
+				followers: 1800,
+				stars: 28000,
+				activityScore: 88,
+			},
+			{
+				name: 'honojs',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/98495527',
+				description: 'Ultrafast web framework for the Edges',
+				repos: 24,
+				followers: 1100,
+				stars: 22000,
+				activityScore: 82,
+			},
+			{
+				name: 'effect-ts',
+				avatarUrl: 'https://avatars.githubusercontent.com/u/132182030',
+				description: 'A powerful TypeScript framework',
+				repos: 18,
+				followers: 600,
+				stars: 8500,
+				activityScore: 75,
+			},
 		],
 	}
 	return fallbacks[category]

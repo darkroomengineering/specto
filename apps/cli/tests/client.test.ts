@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { GitHubError, RateLimitError } from '../src/lib/github/client'
 
 describe('GitHub client', () => {

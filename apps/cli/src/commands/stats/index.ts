@@ -1,10 +1,9 @@
-import { Command } from 'commander'
 import { getDefaultDateRange, type OutputFormat } from '@specto/core'
-import { runCommitStats } from './commits'
+import { Command } from 'commander'
 import { wrapCommand } from '../../lib/utils/errors'
+import { runCommitStats } from './commits'
 
-export const statsCommand = new Command('stats')
-	.description('Statistics and metrics commands')
+export const statsCommand = new Command('stats').description('Statistics and metrics commands')
 
 statsCommand
 	.command('commits')
@@ -17,37 +16,46 @@ statsCommand
 	.option('-o, --output <format>', 'Output format (table, json, csv)', 'table')
 	.option('-t, --top <n>', 'Show only top N contributors', Number.parseInt)
 	.action(
-		wrapCommand(async (org: string | undefined, options: {
-			since?: string
-			until?: string
-			membersOnly: boolean
-			includeBots: boolean
-			output: string
-			top?: number
-		}) => {
-			if (!org) {
-				console.error('Organization name is required. Usage: pondus stats commits <org>')
-				process.exit(1)
+		wrapCommand(
+			async (
+				org: string | undefined,
+				options: {
+					since?: string
+					until?: string
+					membersOnly: boolean
+					includeBots: boolean
+					output: string
+					top?: number
+				}
+			) => {
+				if (!org) {
+					console.error('Organization name is required. Usage: pondus stats commits <org>')
+					process.exit(1)
+				}
+
+				const defaults = getDefaultDateRange()
+				const since = options.since
+					? options.since.includes('T')
+						? options.since
+						: `${options.since}T00:00:00Z`
+					: defaults.since
+				const until = options.until
+					? options.until.includes('T')
+						? options.until
+						: `${options.until}T23:59:59Z`
+					: defaults.until
+
+				await runCommitStats({
+					org,
+					since,
+					until,
+					membersOnly: options.membersOnly,
+					includeBots: options.includeBots ?? false,
+					output: options.output as OutputFormat,
+					top: options.top,
+				})
 			}
-
-			const defaults = getDefaultDateRange()
-			const since = options.since
-				? (options.since.includes('T') ? options.since : `${options.since}T00:00:00Z`)
-				: defaults.since
-			const until = options.until
-				? (options.until.includes('T') ? options.until : `${options.until}T23:59:59Z`)
-				: defaults.until
-
-			await runCommitStats({
-				org,
-				since,
-				until,
-				membersOnly: options.membersOnly,
-				includeBots: options.includeBots ?? false,
-				output: options.output as OutputFormat,
-				top: options.top,
-			})
-		})
+		)
 	)
 
 // Default command (just run commits)

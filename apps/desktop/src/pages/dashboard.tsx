@@ -1,10 +1,10 @@
 import { Card, Stat, staggerContainer, staggerItem } from '@specto/ui'
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { useAuthStore } from '../stores/auth'
-import { useProFeature, FREE_LIMITS } from '../stores/license'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Spinner } from '../components/spinner'
+import { useAuthStore } from '../stores/auth'
+import { FREE_LIMITS, useProFeature } from '../stores/license'
 
 interface UserStats {
 	publicRepos: number
@@ -47,8 +47,10 @@ export function Dashboard() {
 				const orgs = await orgsRes.json()
 
 				// Calculate total stars
-				const totalStars = repos.reduce((sum: number, repo: { stargazers_count?: number }) =>
-					sum + (repo.stargazers_count || 0), 0)
+				const totalStars = repos.reduce(
+					(sum: number, repo: { stargazers_count?: number }) => sum + (repo.stargazers_count || 0),
+					0
+				)
 
 				// Get recent activity (last 30 days)
 				const thirtyDaysAgo = new Date()
@@ -83,9 +85,9 @@ export function Dashboard() {
 							if (prsRes.ok) {
 								const prs = await prsRes.json()
 								// Filter PRs by user and date
-								const userPRs = prs.filter((pr: { user?: { login: string }; created_at: string }) =>
-									pr.user?.login === username &&
-									new Date(pr.created_at) > thirtyDaysAgo
+								const userPRs = prs.filter(
+									(pr: { user?: { login: string }; created_at: string }) =>
+										pr.user?.login === username && new Date(pr.created_at) > thirtyDaysAgo
 								)
 								recentPRs += userPRs.length
 							}
@@ -126,9 +128,7 @@ export function Dashboard() {
 				<h1 className="text-2xl font-semibold text-[var(--foreground)]">
 					Welcome back, <span className="text-[var(--accent)]">{username}</span>
 				</h1>
-				<p className="text-sm text-[var(--muted)] mt-2">
-					Your GitHub activity at a glance
-				</p>
+				<p className="text-sm text-[var(--muted)] mt-2">Your GitHub activity at a glance</p>
 			</motion.div>
 
 			{/* User stats */}
@@ -144,28 +144,28 @@ export function Dashboard() {
 				<motion.div variants={staggerItem}>
 					<Stat
 						label="Repositories"
-						value={isLoading ? <Spinner size="sm" /> : userStats?.publicRepos ?? '—'}
+						value={isLoading ? <Spinner size="sm" /> : (userStats?.publicRepos ?? '—')}
 						description="Public repos"
 					/>
 				</motion.div>
 				<motion.div variants={staggerItem}>
 					<Stat
 						label="Total Stars"
-						value={isLoading ? <Spinner size="sm" /> : userStats?.totalStars ?? '—'}
+						value={isLoading ? <Spinner size="sm" /> : (userStats?.totalStars ?? '—')}
 						description="Across all repos"
 					/>
 				</motion.div>
 				<motion.div variants={staggerItem}>
 					<Stat
 						label="Commits"
-						value={isLoading ? <Spinner size="sm" /> : userStats?.recentCommits ?? '—'}
+						value={isLoading ? <Spinner size="sm" /> : (userStats?.recentCommits ?? '—')}
 						description="Last 30 days"
 					/>
 				</motion.div>
 				<motion.div variants={staggerItem}>
 					<Stat
 						label="Pull Requests"
-						value={isLoading ? <Spinner size="sm" /> : userStats?.recentPRs ?? '—'}
+						value={isLoading ? <Spinner size="sm" /> : (userStats?.recentPRs ?? '—')}
 						description="Last 30 days"
 					/>
 				</motion.div>
@@ -187,7 +187,13 @@ export function Dashboard() {
 										<span className="text-[var(--accent)]">Unlimited</span>
 									) : (
 										<>
-											<span className={userStats.orgs.length >= FREE_LIMITS.maxOrganizations ? 'text-[var(--color-warning)]' : ''}>
+											<span
+												className={
+													userStats.orgs.length >= FREE_LIMITS.maxOrganizations
+														? 'text-[var(--color-warning)]'
+														: ''
+												}
+											>
 												{userStats.orgs.length}
 											</span>
 											<span> / {FREE_LIMITS.maxOrganizations}</span>
@@ -211,7 +217,7 @@ export function Dashboard() {
 								initial="initial"
 								animate="animate"
 							>
-								{userStats.orgs.map((org, index) => (
+								{userStats.orgs.map((org, _index) => (
 									<motion.button
 										key={org.login}
 										onClick={() => navigate(`/org/${org.login}`)}
@@ -245,13 +251,24 @@ export function Dashboard() {
 					<Card className="flex-1">
 						<Card.Content className="flex flex-col items-center justify-center h-full py-12 text-center">
 							<div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mb-4">
-								<svg className="w-6 h-6 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+								<svg
+									className="w-6 h-6 text-[var(--muted)]"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+									/>
 								</svg>
 							</div>
 							<h3 className="text-sm font-medium mb-1">No organizations yet</h3>
 							<p className="text-xs text-[var(--muted)] max-w-xs">
-								Search for any GitHub organization using the search bar above to explore their metrics.
+								Search for any GitHub organization using the search bar above to explore their
+								metrics.
 							</p>
 						</Card.Content>
 					</Card>

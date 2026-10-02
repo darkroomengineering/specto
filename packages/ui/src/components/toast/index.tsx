@@ -1,7 +1,7 @@
 'use client'
 
-import { Toaster as SonnerToaster, toast as sonnerToast, type ExternalToast } from 'sonner'
 import type { ComponentProps } from 'react'
+import { type ExternalToast, Toaster as SonnerToaster, toast as sonnerToast } from 'sonner'
 
 // =============================================================================
 // Toaster Component
@@ -37,7 +37,8 @@ export function SpectoToaster(props: ToasterProps) {
 					description: 'text-xs text-[var(--muted)]',
 					actionButton: 'bg-[var(--color-primary)] text-white text-xs px-2 py-1 rounded',
 					cancelButton: 'bg-[var(--card-hover)] text-[var(--foreground)] text-xs px-2 py-1 rounded',
-					closeButton: 'bg-[var(--card)] border-[var(--border)] text-[var(--muted)] hover:bg-[var(--card-hover)]',
+					closeButton:
+						'bg-[var(--card)] border-[var(--border)] text-[var(--muted)] hover:bg-[var(--card-hover)]',
 					success: 'border-[var(--color-success)]/30 [&_[data-icon]]:text-[var(--color-success)]',
 					error: 'border-[var(--color-error)]/30 [&_[data-icon]]:text-[var(--color-error)]',
 					warning: 'border-[var(--color-warning)]/30 [&_[data-icon]]:text-[var(--color-warning)]',

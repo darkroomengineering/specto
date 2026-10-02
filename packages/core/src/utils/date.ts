@@ -38,7 +38,10 @@ export function ensureISOFormat(date: string): string {
 	return formatDateISO(d)
 }
 
-export function getQuarterDates(year: number, quarter: 1 | 2 | 3 | 4): { since: string; until: string } {
+export function getQuarterDates(
+	year: number,
+	quarter: 1 | 2 | 3 | 4
+): { since: string; until: string } {
 	const quarterStarts = [
 		{ month: 0, day: 1 },
 		{ month: 3, day: 1 },

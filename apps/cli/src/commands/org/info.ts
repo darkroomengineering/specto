@@ -1,5 +1,5 @@
-import pc from 'picocolors'
 import { getOrganization, type OutputFormat } from '@specto/core'
+import pc from 'picocolors'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printKeyValue, printSection } from '../../lib/ui/table'
 

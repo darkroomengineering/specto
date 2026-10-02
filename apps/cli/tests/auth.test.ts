@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { AuthError } from '../src/lib/github/auth'
 
 describe('auth utilities', () => {
@@ -68,7 +68,7 @@ describe('auth utilities', () => {
 			delete process.env.GH_TOKEN
 
 			// Mock gh CLI to fail
-			const mockExec = mock(() => Promise.reject(new Error('gh not found')))
+			const _mockExec = mock(() => Promise.reject(new Error('gh not found')))
 
 			// This test needs the actual module behavior
 			// We test the error message format

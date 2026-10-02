@@ -1,30 +1,27 @@
 {
-  "name": "specto",
-  "version": "1.0.1",
-  "private": true,
-  "description": "GitHub organization metrics - CLI, desktop app, and web dashboard",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev": "turbo dev --filter=!./apps/cli",
-    "build": "turbo build",
-    "test": "turbo test",
-    "typecheck": "turbo typecheck",
-    "lint": "turbo lint",
-    "lint:fix": "turbo lint:fix",
-    "clean": "turbo clean && rm -rf node_modules"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
-    "turbo": "^2.7.4",
-    "typescript": "^5.9.3"
-  },
-  "packageManager": "bun@1.2.18",
-  "author": "Specto",
-  "license": "MIT",
-  "dependencies": {
-    "esbuild": "^0.27.2"
-  }
+	"name": "specto",
+	"version": "1.0.1",
+	"author": "Specto",
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.15",
+		"turbo": "^2.11.7",
+		"typescript": "^5.9.3"
+	},
+	"description": "GitHub organization metrics - CLI, desktop app, and web dashboard",
+	"license": "MIT",
+	"packageManager": "bun@1.4.1",
+	"private": true,
+	"scripts": {
+		"dev": "turbo dev --filter=!./apps/cli",
+		"build": "turbo build",
+		"test": "turbo test",
+		"typecheck": "turbo typecheck",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"clean": "turbo clean && rm -rf node_modules"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	]
 }

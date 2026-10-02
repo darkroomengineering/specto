@@ -1,7 +1,7 @@
-import pc from 'picocolors'
 import { getActionsSettings, getOrgRunners, getOrgSecrets, type OutputFormat } from '@specto/core'
+import pc from 'picocolors'
 import { withSpinner } from '../../lib/ui/spinner'
-import { printTable, printKeyValue, printSection, printWarning } from '../../lib/ui/table'
+import { printKeyValue, printSection, printTable, printWarning } from '../../lib/ui/table'
 
 interface ActionsOptions {
 	org: string

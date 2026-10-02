@@ -176,11 +176,7 @@ const desktopPages: QAPage[] = [
 			{
 				name: 'Loading State',
 				description: 'Organization data loading',
-				checks: [
-					'Skeleton shows full layout',
-					'No jarring transitions',
-					'Smooth fade to content',
-				],
+				checks: ['Skeleton shows full layout', 'No jarring transitions', 'Smooth fade to content'],
 			},
 			{
 				name: 'Loaded State',
@@ -205,11 +201,7 @@ const desktopPages: QAPage[] = [
 			{
 				name: 'Error State',
 				description: 'Organization not found',
-				checks: [
-					'Error message clear',
-					'Suggestions offered',
-					'Retry button works',
-				],
+				checks: ['Error message clear', 'Suggestions offered', 'Retry button works'],
 			},
 		],
 	},
@@ -220,20 +212,12 @@ const desktopPages: QAPage[] = [
 			{
 				name: 'Free User',
 				description: 'Non-Pro settings view',
-				checks: [
-					'License key input visible',
-					'Upgrade prompt shown',
-					'GitHub connection status',
-				],
+				checks: ['License key input visible', 'Upgrade prompt shown', 'GitHub connection status'],
 			},
 			{
 				name: 'Pro User',
 				description: 'Pro settings view',
-				checks: [
-					'PRO badge visible',
-					'License key masked',
-					'All features unlocked',
-				],
+				checks: ['PRO badge visible', 'License key masked', 'All features unlocked'],
 			},
 		],
 	},
@@ -244,11 +228,7 @@ const desktopPages: QAPage[] = [
 			{
 				name: 'Default State',
 				description: 'Global rankings view',
-				checks: [
-					'Table renders correctly',
-					'Category tabs work',
-					'Search accessible from sidebar',
-				],
+				checks: ['Table renders correctly', 'Category tabs work', 'Search accessible from sidebar'],
 			},
 		],
 	},
@@ -282,7 +262,12 @@ export function QAChecklist() {
 					aria-label="Close checklist"
 				>
 					<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={2}
+							d="M6 18L18 6M6 6l12 12"
+						/>
 					</svg>
 				</button>
 			</div>
@@ -350,13 +335,14 @@ export function QAChecklist() {
 			{/* Footer */}
 			<div className="p-4 border-t border-[var(--border)]">
 				<p className="text-xs text-[var(--muted)]">
-					Use <code className="px-1 py-0.5 bg-[var(--background)] rounded">agent-browser</code> for automated visual QA
+					Use <code className="px-1 py-0.5 bg-[var(--background)] rounded">agent-browser</code> for
+					automated visual QA
 				</p>
 			</div>
 		</div>
 	)
 }
 
-// Export page configs for programmatic access
-export { webPages, desktopPages }
 export type { QAPage, QAScenario }
+// Export page configs for programmatic access
+export { desktopPages, webPages }

@@ -1,4 +1,4 @@
-import type { CacheStore, CacheEntry, CacheOptions, CacheStats } from './types'
+import type { CacheEntry, CacheOptions, CacheStats, CacheStore } from './types'
 
 /**
  * In-memory LRU cache implementation

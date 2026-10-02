@@ -1,32 +1,30 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "globalEnv": [
-    "POLAR_ACCESS_TOKEN",
-    "POLAR_WEBHOOK_SECRET",
-    "TURSO_DATABASE_URL",
-    "TURSO_AUTH_TOKEN",
-    "GITHUB_TOKEN",
-    "NEXT_PUBLIC_APP_URL"
-  ],
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "src-tauri/target/**"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "test": {
-      "dependsOn": ["^build"]
-    },
-    "typecheck": {
-      "dependsOn": ["^build"]
-    },
-    "lint": {},
-    "lint:fix": {},
-    "clean": {
-      "cache": false
-    }
-  }
+	"$schema": "https://turbo.build/schema.json",
+	"globalEnv": [
+		"POLAR_ACCESS_TOKEN",
+		"POLAR_WEBHOOK_SECRET",
+		"TURSO_DATABASE_URL",
+		"TURSO_AUTH_TOKEN",
+		"GITHUB_TOKEN",
+		"NEXT_PUBLIC_APP_URL"
+	],
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**", ".next/**", "src-tauri/target/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"test": {
+			"dependsOn": ["^build"]
+		},
+		"typecheck": {
+			"dependsOn": ["^build"]
+		},
+		"clean": {
+			"cache": false
+		}
+	}
 }

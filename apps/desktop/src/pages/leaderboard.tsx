@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Card, Badge } from '@specto/ui'
-import { useAuthStore } from '../stores/auth'
+import { Badge, Card } from '@specto/ui'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Spinner } from '../components/spinner'
 import {
+	FALLBACK_DATA,
 	fetchLeaderboard,
 	LEADERBOARD_CATEGORIES,
-	FALLBACK_DATA,
-	type OrgStats,
 	type LeaderboardCategory,
+	type OrgStats,
 } from '../lib/api'
+import { useAuthStore } from '../stores/auth'
 
 interface UserOrgStats {
 	login: string
@@ -21,8 +21,8 @@ interface UserOrgStats {
 }
 
 function formatNumber(num: number): string {
-	if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-	if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
+	if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+	if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
 	return num.toString()
 }
 
@@ -31,7 +31,7 @@ function RankBadge({ rank }: { rank: number }) {
 		return (
 			<div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
 				<svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+					<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 				</svg>
 			</div>
 		)
@@ -89,7 +89,12 @@ function ActivityScoreHint() {
 				className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
 			>
 				<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+					/>
 				</svg>
 				How is this calculated?
 			</button>
@@ -110,7 +115,8 @@ function ActivityScoreHint() {
 						</div>
 					</div>
 					<p className="text-xs text-[var(--muted)] mt-3 pt-3 border-t border-[var(--border)]">
-						Organizations with fewer but higher-impact repos rank higher than those with many low-star repos.
+						Organizations with fewer but higher-impact repos rank higher than those with many
+						low-star repos.
 					</p>
 				</div>
 			)}
@@ -172,9 +178,10 @@ export function Leaderboard() {
 						if (!res.ok) return null
 						const data = await res.json()
 
-						const score = Math.min(99, Math.max(10,
-							Math.round((data.public_repos * 0.5 + data.followers * 0.3) / 10)
-						))
+						const score = Math.min(
+							99,
+							Math.max(10, Math.round((data.public_repos * 0.5 + data.followers * 0.3) / 10))
+						)
 
 						return {
 							login: data.login,
@@ -191,8 +198,9 @@ export function Leaderboard() {
 				})
 
 				const userResults = await Promise.all(userOrgPromises)
-				setUserOrgs(userResults.filter((o): o is UserOrgStats => o !== null)
-					.sort((a, b) => b.score - a.score))
+				setUserOrgs(
+					userResults.filter((o): o is UserOrgStats => o !== null).sort((a, b) => b.score - a.score)
+				)
 			} catch (err) {
 				console.error('Failed to fetch user orgs:', err)
 			}
@@ -206,7 +214,7 @@ export function Leaderboard() {
 		setCategory(newCategory)
 	}
 
-	const currentCategory = LEADERBOARD_CATEGORIES.find(c => c.value === category)
+	const currentCategory = LEADERBOARD_CATEGORIES.find((c) => c.value === category)
 
 	return (
 		<div className="h-full flex flex-col p-8 overflow-auto">
@@ -215,7 +223,7 @@ export function Leaderboard() {
 				<div className="flex items-center gap-3 mb-4">
 					<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center">
 						<svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+							<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 						</svg>
 					</div>
 					<div>
@@ -248,12 +256,19 @@ export function Leaderboard() {
 								stroke="currentColor"
 								viewBox="0 0 24 24"
 							>
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M19 9l-7 7-7-7"
+								/>
 							</svg>
 						</div>
 					</div>
 					{currentCategory && (
-						<span className="text-xs text-[var(--muted)] hidden sm:inline">{currentCategory.description}</span>
+						<span className="text-xs text-[var(--muted)] hidden sm:inline">
+							{currentCategory.description}
+						</span>
 					)}
 					<div className="ml-auto">
 						<ActivityScoreHint />
@@ -329,8 +344,18 @@ export function Leaderboard() {
 							{userOrgs.length === 0 ? (
 								<div className="flex flex-col items-center justify-center py-12 text-center px-6">
 									<div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mb-4">
-										<svg className="w-6 h-6 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+										<svg
+											className="w-6 h-6 text-[var(--muted)]"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={1.5}
+												d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+											/>
 										</svg>
 									</div>
 									<h3 className="text-sm font-medium mb-2">No organizations yet</h3>

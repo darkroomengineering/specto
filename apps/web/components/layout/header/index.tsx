@@ -3,8 +3,8 @@
 import { Button } from '@specto/ui'
 import Link from 'next/link'
 import { Logo } from '@/components/logo'
-import { MobileNav } from './mobile-nav'
 import s from './header.module.css'
+import { MobileNav } from './mobile-nav'
 
 const navItems = [
 	{ href: '/#features', label: 'Features' },
@@ -35,16 +35,16 @@ export function Header() {
 							key={item.href}
 							href={item.href}
 							className={s.navLink}
-							{...(item.external ? {
-								target: '_blank',
-								rel: 'noopener noreferrer',
-								'aria-label': `${item.label} (opens in new tab)`
-							} : {})}
+							{...(item.external
+								? {
+										target: '_blank',
+										rel: 'noopener noreferrer',
+										'aria-label': `${item.label} (opens in new tab)`,
+									}
+								: {})}
 						>
 							{item.label}
-							{item.external && (
-								<span className="sr-only"> (opens in new tab)</span>
-							)}
+							{item.external && <span className="sr-only"> (opens in new tab)</span>}
 						</Link>
 					))}
 					<Link href="/downloads">

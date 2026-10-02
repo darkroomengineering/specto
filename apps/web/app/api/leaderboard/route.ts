@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getLeaderboardData, LEADERBOARD_CATEGORIES, type LeaderboardCategory } from '@/lib/github'
 
 // Enable ISR with 30 minute revalidation
@@ -9,12 +9,17 @@ const ALLOWED_ORIGINS: string[] = [
 	'https://specto.darkroom.engineering',
 	'http://tauri.localhost', // Tauri 2.x production origin
 	'tauri://localhost', // Legacy Tauri origin
-	...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:1420'] : []),
+	...(process.env.NODE_ENV === 'development'
+		? ['http://localhost:3000', 'http://localhost:1420']
+		: []),
 ]
 
 function getCorsHeaders(request: NextRequest): Record<string, string> {
 	const origin = request.headers.get('origin')
-	const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering'
+	const allowedOrigin =
+		origin && ALLOWED_ORIGINS.includes(origin)
+			? origin
+			: (ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering')
 	return {
 		'Access-Control-Allow-Origin': allowedOrigin,
 		'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -32,7 +37,8 @@ export async function GET(request: NextRequest) {
 	const category = searchParams.get('category') as LeaderboardCategory | null
 
 	// Validate category
-	const validCategory = LEADERBOARD_CATEGORIES.find(c => c.value === category)?.value || 'developer-favorites'
+	const validCategory =
+		LEADERBOARD_CATEGORIES.find((c) => c.value === category)?.value || 'developer-favorites'
 
 	try {
 		const data = await getLeaderboardData(validCategory)
@@ -48,6 +54,9 @@ export async function GET(request: NextRequest) {
 		)
 	} catch (error) {
 		console.error('Leaderboard API error:', error)
-		return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500, headers: corsHeaders })
+		return NextResponse.json(
+			{ error: 'Failed to fetch leaderboard' },
+			{ status: 500, headers: corsHeaders }
+		)
 	}
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { statsCommand } from './commands/stats'
-import { orgCommand } from './commands/org'
 import { configCommand } from './commands/config'
+import { orgCommand } from './commands/org'
+import { statsCommand } from './commands/stats'
 import { runInteractive } from './interactive'
 
 const program = new Command()

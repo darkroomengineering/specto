@@ -59,7 +59,10 @@ export async function withSpinner<T>(
 	}
 }
 
-export function createProgressSpinner(total: number, prefix: string): {
+export function createProgressSpinner(
+	total: number,
+	prefix: string
+): {
 	update: (current: number, item?: string) => void
 	succeed: (text?: string) => void
 	fail: (text?: string) => void

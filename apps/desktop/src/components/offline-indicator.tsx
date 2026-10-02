@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@specto/ui'
+import { AnimatePresence, motion } from 'motion/react'
 
 interface OfflineIndicatorProps {
 	isOnline: boolean

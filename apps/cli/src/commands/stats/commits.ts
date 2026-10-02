@@ -1,13 +1,13 @@
-import pc from 'picocolors'
 import {
+	type CommitStats,
+	formatDateRange,
 	getOrgMembersList,
 	getOrgReposList,
 	getRepoCommits,
-	formatDateRange,
-	type CommitStats,
 	type OutputFormat,
 	type Repository,
 } from '@specto/core'
+import pc from 'picocolors'
 import { createProgressSpinner, withSpinner } from '../../lib/ui/spinner'
 import { printTable } from '../../lib/ui/table'
 

@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts'
+import { getDefaultDateRange, getUserOrgs, type OutputFormat } from '@specto/core'
 import pc from 'picocolors'
-import { getUserOrgs, getDefaultDateRange, type OutputFormat } from '@specto/core'
 
 export async function selectOrganization(defaultOrg?: string): Promise<string> {
 	// If default provided and user confirms, use it
@@ -35,10 +35,7 @@ export async function selectOrganization(defaultOrg?: string): Promise<string> {
 	if (orgs.length > 0) {
 		const selected = await p.select({
 			message: 'Select an organization',
-			options: [
-				...orgs,
-				{ value: '__other__', label: pc.dim('Enter manually...') },
-			],
+			options: [...orgs, { value: '__other__', label: pc.dim('Enter manually...') }],
 		})
 
 		if (p.isCancel(selected)) {

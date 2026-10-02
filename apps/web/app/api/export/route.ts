@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 const POLAR_ORG_ID = 'darkroomengineering'
 
@@ -10,12 +10,17 @@ const ALLOWED_ORIGINS: string[] = [
 	'https://specto.darkroom.engineering',
 	'http://tauri.localhost', // Tauri 2.x production origin
 	'tauri://localhost', // Legacy Tauri origin
-	...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:1420'] : []),
+	...(process.env.NODE_ENV === 'development'
+		? ['http://localhost:3000', 'http://localhost:1420']
+		: []),
 ]
 
 function getCorsHeaders(request: NextRequest): Record<string, string> {
 	const origin = request.headers.get('origin')
-	const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering'
+	const allowedOrigin =
+		origin && ALLOWED_ORIGINS.includes(origin)
+			? origin
+			: (ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering')
 	return {
 		'Access-Control-Allow-Origin': allowedOrigin,
 		'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -53,17 +58,14 @@ async function validateLicense(licenseKey: string): Promise<boolean> {
 	}
 
 	try {
-		const response = await fetch(
-			'https://api.polar.sh/v1/customer-portal/license-keys/validate',
-			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					key: licenseKey,
-					organization_id: POLAR_ORG_ID,
-				}),
-			}
-		)
+		const response = await fetch('https://api.polar.sh/v1/customer-portal/license-keys/validate', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				key: licenseKey,
+				organization_id: POLAR_ORG_ID,
+			}),
+		})
 
 		if (!response.ok) return false
 
@@ -137,9 +139,6 @@ export async function POST(request: NextRequest) {
 		})
 	} catch (error) {
 		console.error('Export error:', error)
-		return NextResponse.json(
-			{ error: 'Export failed' },
-			{ status: 500, headers: corsHeaders }
-		)
+		return NextResponse.json({ error: 'Export failed' }, { status: 500, headers: corsHeaders })
 	}
 }

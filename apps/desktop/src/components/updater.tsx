@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react'
-import { check, type Update } from '@tauri-apps/plugin-updater'
-import { relaunch } from '@tauri-apps/plugin-process'
 import { Button, Card } from '@specto/ui'
+import { relaunch } from '@tauri-apps/plugin-process'
+import { check, type Update } from '@tauri-apps/plugin-updater'
+import { useEffect, useState } from 'react'
 
 export function Updater() {
 	const [update, setUpdate] = useState<Update | null>(null)
-	const [checking, setChecking] = useState(false)
+	const [_checking, setChecking] = useState(false)
 	const [downloading, setDownloading] = useState(false)
 	const [progress, setProgress] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
 		checkForUpdate()
-	}, [])
+	}, [checkForUpdate])
 
 	async function checkForUpdate() {
 		setChecking(true)
@@ -88,14 +88,17 @@ export function Updater() {
 							aria-label="Dismiss"
 						>
 							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M6 18L18 6M6 6l12 12"
+								/>
 							</svg>
 						</button>
 					</div>
 
-					{error && (
-						<p className="text-sm text-[var(--color-error)] mt-2">{error}</p>
-					)}
+					{error && <p className="text-sm text-[var(--color-error)] mt-2">{error}</p>}
 
 					{downloading ? (
 						<div className="mt-3">

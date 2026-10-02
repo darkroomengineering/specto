@@ -1,8 +1,8 @@
-import type { CacheStore, CacheEntry, CacheOptions, CacheStats } from './types'
-import { mkdir, readFile, writeFile, unlink, readdir, stat } from 'node:fs/promises'
-import { join } from 'node:path'
-import { homedir } from 'node:os'
 import { createHash } from 'node:crypto'
+import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import type { CacheEntry, CacheOptions, CacheStats, CacheStore } from './types'
 
 /**
  * Disk-based cache implementation for persistent storage
@@ -57,7 +57,12 @@ export class DiskCache implements CacheStore {
 			const parsed = JSON.parse(content)
 
 			// Validate the parsed data has expected cache entry structure
-			if (!parsed || typeof parsed !== 'object' || !('data' in parsed) || !('expiresAt' in parsed)) {
+			if (
+				!parsed ||
+				typeof parsed !== 'object' ||
+				!('data' in parsed) ||
+				!('expiresAt' in parsed)
+			) {
 				this._stats.misses++
 				return null
 			}

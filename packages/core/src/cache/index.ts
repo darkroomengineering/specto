@@ -1,10 +1,10 @@
-export * from './types'
-export * from './memory'
 export * from './disk'
+export * from './memory'
+export * from './types'
 
-import type { CacheStore, CacheOptions } from './types'
-import { MemoryCache } from './memory'
 import { DiskCache } from './disk'
+import { MemoryCache } from './memory'
+import type { CacheOptions, CacheStore } from './types'
 
 export type CacheType = 'memory' | 'disk'
 
@@ -22,7 +22,6 @@ export function createCache(options: CreateCacheOptions = {}): CacheStore {
 	switch (type) {
 		case 'disk':
 			return new DiskCache(options)
-		case 'memory':
 		default:
 			return new MemoryCache(options)
 	}
@@ -37,10 +36,7 @@ const inFlightRequests = new Map<string, Promise<unknown>>()
  * Deduplicate concurrent requests with the same key
  * If a request for the same key is already in flight, return that promise
  */
-export async function deduplicatedFetch<T>(
-	key: string,
-	fetcher: () => Promise<T>
-): Promise<T> {
+export async function deduplicatedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
 	// Check if request is already in flight
 	const existing = inFlightRequests.get(key) as Promise<T> | undefined
 	if (existing) {
@@ -48,11 +44,10 @@ export async function deduplicatedFetch<T>(
 	}
 
 	// Create new request
-	const promise = fetcher()
-		.finally(() => {
-			// Remove from in-flight map when done
-			inFlightRequests.delete(key)
-		})
+	const promise = fetcher().finally(() => {
+		// Remove from in-flight map when done
+		inFlightRequests.delete(key)
+	})
 
 	inFlightRequests.set(key, promise)
 	return promise

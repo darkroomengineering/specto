@@ -5,17 +5,14 @@ const POLAR_ORG_ID = 'darkroomengineering'
 // Validate license key and get associated customer ID
 async function validateLicenseAndGetCustomerId(licenseKey: string): Promise<string | null> {
 	try {
-		const response = await fetch(
-			'https://api.polar.sh/v1/customer-portal/license-keys/validate',
-			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					key: licenseKey,
-					organization_id: POLAR_ORG_ID,
-				}),
-			}
-		)
+		const response = await fetch('https://api.polar.sh/v1/customer-portal/license-keys/validate', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				key: licenseKey,
+				organization_id: POLAR_ORG_ID,
+			}),
+		})
 
 		if (!response.ok) return null
 

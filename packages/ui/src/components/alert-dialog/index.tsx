@@ -52,15 +52,8 @@ export interface AlertDialogTriggerProps {
 	asChild?: boolean
 }
 
-function AlertDialogTrigger({
-	children,
-	asChild = false,
-}: AlertDialogTriggerProps) {
-	return (
-		<AlertDialogPrimitive.Trigger asChild={asChild}>
-			{children}
-		</AlertDialogPrimitive.Trigger>
-	)
+function AlertDialogTrigger({ children, asChild = false }: AlertDialogTriggerProps) {
+	return <AlertDialogPrimitive.Trigger asChild={asChild}>{children}</AlertDialogPrimitive.Trigger>
 }
 
 export interface AlertDialogContentProps {
@@ -113,11 +106,7 @@ export interface AlertDialogHeaderProps {
 }
 
 function AlertDialogHeader({ children, className }: AlertDialogHeaderProps) {
-	return (
-		<div className={cn('px-6 py-4', className)}>
-			{children}
-		</div>
-	)
+	return <div className={cn('px-6 py-4', className)}>{children}</div>
 }
 
 export interface AlertDialogTitleProps {
@@ -128,10 +117,7 @@ export interface AlertDialogTitleProps {
 function AlertDialogTitle({ children, className }: AlertDialogTitleProps) {
 	return (
 		<AlertDialogPrimitive.Title
-			className={cn(
-				'text-lg font-semibold text-[var(--foreground)]',
-				className
-			)}
+			className={cn('text-lg font-semibold text-[var(--foreground)]', className)}
 		>
 			{children}
 		</AlertDialogPrimitive.Title>
@@ -143,14 +129,9 @@ export interface AlertDialogDescriptionProps {
 	className?: string
 }
 
-function AlertDialogDescription({
-	children,
-	className,
-}: AlertDialogDescriptionProps) {
+function AlertDialogDescription({ children, className }: AlertDialogDescriptionProps) {
 	return (
-		<AlertDialogPrimitive.Description
-			className={cn('text-sm text-[var(--muted)] mt-2', className)}
-		>
+		<AlertDialogPrimitive.Description className={cn('text-sm text-[var(--muted)] mt-2', className)}>
 			{children}
 		</AlertDialogPrimitive.Description>
 	)
@@ -164,10 +145,7 @@ export interface AlertDialogFooterProps {
 function AlertDialogFooter({ children, className }: AlertDialogFooterProps) {
 	return (
 		<div
-			className={cn(
-				'px-6 py-4 border-t border-[var(--border)] flex justify-end gap-3',
-				className
-			)}
+			className={cn('px-6 py-4 border-t border-[var(--border)] flex justify-end gap-3', className)}
 		>
 			{children}
 		</div>
@@ -180,11 +158,7 @@ export interface AlertDialogCancelProps {
 }
 
 function AlertDialogCancel({ children, asChild = false }: AlertDialogCancelProps) {
-	return (
-		<AlertDialogPrimitive.Cancel asChild={asChild}>
-			{children}
-		</AlertDialogPrimitive.Cancel>
-	)
+	return <AlertDialogPrimitive.Cancel asChild={asChild}>{children}</AlertDialogPrimitive.Cancel>
 }
 
 export interface AlertDialogActionProps {
@@ -193,11 +167,7 @@ export interface AlertDialogActionProps {
 }
 
 function AlertDialogAction({ children, asChild = false }: AlertDialogActionProps) {
-	return (
-		<AlertDialogPrimitive.Action asChild={asChild}>
-			{children}
-		</AlertDialogPrimitive.Action>
-	)
+	return <AlertDialogPrimitive.Action asChild={asChild}>{children}</AlertDialogPrimitive.Action>
 }
 
 AlertDialog.Trigger = AlertDialogTrigger

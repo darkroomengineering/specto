@@ -1,7 +1,7 @@
 'use client'
 
-import type { HTMLAttributes, ReactNode, ThHTMLAttributes, TdHTMLAttributes } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import type { HTMLAttributes, ReactNode, TdHTMLAttributes, ThHTMLAttributes } from 'react'
 import { cn } from '../../utils/cn'
 
 export interface TableProps extends HTMLAttributes<HTMLTableElement> {
@@ -32,10 +32,7 @@ export interface TableProps extends HTMLAttributes<HTMLTableElement> {
 export function Table({ className, children, ...props }: TableProps) {
 	return (
 		<div className="w-full overflow-auto">
-			<table
-				className={cn('w-full text-sm', className)}
-				{...props}
-			>
+			<table className={cn('w-full text-sm', className)} {...props}>
 				{children}
 			</table>
 		</div>
@@ -58,9 +55,7 @@ function TableBody({ className, children, animated = false, ...props }: TableBod
 	if (animated) {
 		return (
 			<tbody className={cn('[&_tr:last-child]:border-0', className)} {...props}>
-				<AnimatePresence mode="popLayout">
-					{children}
-				</AnimatePresence>
+				<AnimatePresence mode="popLayout">{children}</AnimatePresence>
 			</tbody>
 		)
 	}
@@ -78,7 +73,13 @@ interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
 	isLoading?: boolean
 }
 
-function TableRow({ className, children, animated = false, isLoading = false, ...props }: TableRowProps) {
+function TableRow({
+	className,
+	children,
+	animated = false,
+	isLoading = false,
+	...props
+}: TableRowProps) {
 	const baseClassName = cn(
 		'border-b border-[var(--border)]',
 		'transition-all duration-[var(--duration-fast)]',
@@ -112,10 +113,7 @@ function TableRow({ className, children, animated = false, isLoading = false, ..
 function TableHead({ className, children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
 	return (
 		<th
-			className={cn(
-				'h-10 px-4 text-left align-middle font-medium text-[var(--muted)]',
-				className
-			)}
+			className={cn('h-10 px-4 text-left align-middle font-medium text-[var(--muted)]', className)}
 			{...props}
 		>
 			{children}

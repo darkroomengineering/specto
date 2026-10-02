@@ -1,5 +1,5 @@
-import pc from 'picocolors'
 import { getOrgMembersList, type OutputFormat } from '@specto/core'
+import pc from 'picocolors'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printTable } from '../../lib/ui/table'
 

@@ -1,9 +1,7 @@
-import { eq, and } from 'drizzle-orm'
-import { db, subscriptions, type NewSubscription, type Subscription } from '../index'
+import { and, eq } from 'drizzle-orm'
+import { db, type NewSubscription, type Subscription, subscriptions } from '../index'
 
-export async function findSubscriptionById(
-	id: string
-): Promise<Subscription | undefined> {
+export async function findSubscriptionById(id: string): Promise<Subscription | undefined> {
 	return db.query.subscriptions.findFirst({
 		where: eq(subscriptions.id, id),
 	})
@@ -13,10 +11,7 @@ export async function findActiveSubscriptionByUserId(
 	userId: string
 ): Promise<Subscription | undefined> {
 	return db.query.subscriptions.findFirst({
-		where: and(
-			eq(subscriptions.userId, userId),
-			eq(subscriptions.status, 'active')
-		),
+		where: and(eq(subscriptions.userId, userId), eq(subscriptions.status, 'active')),
 	})
 }
 

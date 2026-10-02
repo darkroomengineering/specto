@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 const POLAR_ORG_ID = 'darkroomengineering'
 
@@ -21,12 +21,17 @@ const ALLOWED_ORIGINS: string[] = [
 	'https://specto.darkroom.engineering',
 	'http://tauri.localhost', // Tauri 2.x production origin
 	'tauri://localhost', // Legacy Tauri origin
-	...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:1420'] : []),
+	...(process.env.NODE_ENV === 'development'
+		? ['http://localhost:3000', 'http://localhost:1420']
+		: []),
 ]
 
 function getCorsHeaders(request: NextRequest): Record<string, string> {
 	const origin = request.headers.get('origin')
-	const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering'
+	const allowedOrigin =
+		origin && ALLOWED_ORIGINS.includes(origin)
+			? origin
+			: (ALLOWED_ORIGINS[0] ?? 'https://specto.darkroom.engineering')
 	return {
 		'Access-Control-Allow-Origin': allowedOrigin,
 		'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -62,32 +67,37 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 
 		// Check master license key (for team use, never expires)
 		if (MASTER_LICENSE_KEY && licenseKey === MASTER_LICENSE_KEY) {
-			return NextResponse.json({
-				valid: true,
-				isPro: true,
-				expiresAt: null, // Never expires
-			}, { headers: corsHeaders })
+			return NextResponse.json(
+				{
+					valid: true,
+					isPro: true,
+					expiresAt: null, // Never expires
+				},
+				{ headers: corsHeaders }
+			)
 		}
 
 		// Validate against Polar API (server-side, can't be bypassed)
-		const response = await fetch(
-			'https://api.polar.sh/v1/customer-portal/license-keys/validate',
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					key: licenseKey,
-					organization_id: POLAR_ORG_ID,
-				}),
-			}
-		)
+		const response = await fetch('https://api.polar.sh/v1/customer-portal/license-keys/validate', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				key: licenseKey,
+				organization_id: POLAR_ORG_ID,
+			}),
+		})
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}))
 			return NextResponse.json(
-				{ valid: false, isPro: false, expiresAt: null, error: errorData.detail || 'Invalid license key' },
+				{
+					valid: false,
+					isPro: false,
+					expiresAt: null,
+					error: errorData.detail || 'Invalid license key',
+				},
 				{ status: 200, headers: corsHeaders } // Return 200 with valid: false, not 4xx
 			)
 		}
@@ -99,19 +109,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<LicenseRe
 		const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false
 
 		if (isValid && !isExpired) {
-			return NextResponse.json({
-				valid: true,
-				isPro: true,
-				expiresAt,
-			}, { headers: corsHeaders })
+			return NextResponse.json(
+				{
+					valid: true,
+					isPro: true,
+					expiresAt,
+				},
+				{ headers: corsHeaders }
+			)
 		}
 
-		return NextResponse.json({
-			valid: false,
-			isPro: false,
-			expiresAt,
-			error: isExpired ? 'License has expired' : 'Invalid license key',
-		}, { headers: corsHeaders })
+		return NextResponse.json(
+			{
+				valid: false,
+				isPro: false,
+				expiresAt,
+				error: isExpired ? 'License has expired' : 'Invalid license key',
+			},
+			{ headers: corsHeaders }
+		)
 	} catch (error) {
 		console.error('License validation error:', error)
 		return NextResponse.json(

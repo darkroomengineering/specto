@@ -1,14 +1,13 @@
-import { Command } from 'commander'
 import type { OutputFormat } from '@specto/core'
+import { Command } from 'commander'
+import { wrapCommand } from '../../lib/utils/errors'
+import { runOrgActions } from './actions'
 import { runOrgInfo } from './info'
 import { runOrgMembers } from './members'
 import { runOrgTeams } from './teams'
 import { runOrgWebhooks } from './webhooks'
-import { runOrgActions } from './actions'
-import { wrapCommand } from '../../lib/utils/errors'
 
-export const orgCommand = new Command('org')
-	.description('Organization settings and info commands')
+export const orgCommand = new Command('org').description('Organization settings and info commands')
 
 orgCommand
 	.command('info')

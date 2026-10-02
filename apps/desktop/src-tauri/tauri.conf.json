@@ -1,56 +1,56 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Specto",
-  "version": "1.2.5",
-  "identifier": "app.specto",
-  "build": {
-    "beforeDevCommand": "bun run dev:vite",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "withGlobalTauri": true,
-    "windows": [
-      {
-        "title": "Specto",
-        "width": 1200,
-        "height": 800,
-        "minWidth": 800,
-        "minHeight": 600,
-        "resizable": true,
-        "fullscreen": false,
-        "decorations": true,
-        "transparent": false
-      }
-    ],
-    "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com data:; connect-src 'self' https://api.github.com https://specto.darkroom.engineering https://api.polar.sh"
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "macOS": {
-      "minimumSystemVersion": "10.15"
-    }
-  },
-  "plugins": {
-    "shell": {
-      "open": true
-    },
-    "updater": {
-      "endpoints": [
-        "https://github.com/darkroomengineering/specto/releases/latest/download/latest.json"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJDQzhBOUY4OTA1REEzOTIKUldTU28xMlErS25JdkpnckhyNzFQVVpZYU1xRWF6U09xVFJrUmdGT1JRTjBkS0pZN0hyN2pIeTcK"
-    }
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "Specto",
+	"version": "1.2.5",
+	"identifier": "app.specto",
+	"build": {
+		"beforeDevCommand": "bun run dev:vite",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"withGlobalTauri": true,
+		"windows": [
+			{
+				"title": "Specto",
+				"width": 1200,
+				"height": 800,
+				"minWidth": 800,
+				"minHeight": 600,
+				"resizable": true,
+				"fullscreen": false,
+				"decorations": true,
+				"transparent": false
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com data:; connect-src 'self' https://api.github.com https://specto.darkroom.engineering https://api.polar.sh"
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		],
+		"macOS": {
+			"minimumSystemVersion": "10.15"
+		}
+	},
+	"plugins": {
+		"shell": {
+			"open": true
+		},
+		"updater": {
+			"endpoints": [
+				"https://github.com/darkroomengineering/specto/releases/latest/download/latest.json"
+			],
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJDQzhBOUY4OTA1REEzOTIKUldTU28xMlErS25JdkpnckhyNzFQVVpZYU1xRWF6U09xVFJrUmdGT1JRTjBkS0pZN0hyN2pIeTcK"
+		}
+	}
 }

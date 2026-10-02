@@ -39,9 +39,7 @@ function parseReleaseAssets(release: {
 }): ReleaseInfo {
 	const findAsset = (pattern: RegExp): ReleaseAsset | null => {
 		const asset = release.assets.find((a) => pattern.test(a.name))
-		return asset
-			? { name: asset.name, url: asset.browser_download_url, size: asset.size }
-			: null
+		return asset ? { name: asset.name, url: asset.browser_download_url, size: asset.size } : null
 	}
 
 	return {
@@ -97,7 +95,7 @@ export async function getLatestRelease(): Promise<ReleaseInfo | null> {
 			return null
 		}
 
-		const releases = await response.json() as Array<{
+		const releases = (await response.json()) as Array<{
 			tag_name: string
 			published_at: string
 			draft: boolean

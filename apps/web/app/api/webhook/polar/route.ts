@@ -1,12 +1,12 @@
 import { Webhooks } from '@polar-sh/nextjs'
-import { NextResponse, type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import {
 	findOrCreateUserByEmail,
-	findUserByPolarCustomerId,
-	updateUserProStatus,
 	findSubscriptionById,
-	upsertSubscription,
+	findUserByPolarCustomerId,
 	updateSubscriptionStatus,
+	updateUserProStatus,
+	upsertSubscription,
 } from '@/lib/db/queries'
 
 const webhookSecret = process.env.POLAR_WEBHOOK_SECRET
@@ -152,10 +152,7 @@ const webhookHandler = Webhooks({
 export async function POST(request: NextRequest): Promise<NextResponse> {
 	if (!webhookSecret || webhookSecret.length < 32) {
 		console.error('POLAR_WEBHOOK_SECRET is missing or invalid')
-		return NextResponse.json(
-			{ error: 'Webhook not configured' },
-			{ status: 503 }
-		)
+		return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
 	}
 	return webhookHandler(request)
 }

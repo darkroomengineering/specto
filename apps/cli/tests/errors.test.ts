@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import { formatError } from '../src/lib/utils/errors'
-import { GitHubError, RateLimitError } from '../src/lib/github/client'
 import { AuthError } from '../src/lib/github/auth'
+import { GitHubError, RateLimitError } from '../src/lib/github/client'
+import { formatError } from '../src/lib/utils/errors'
 
 describe('error formatting', () => {
 	describe('formatError', () => {

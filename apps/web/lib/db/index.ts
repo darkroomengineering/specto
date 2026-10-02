@@ -1,5 +1,5 @@
+import { type Client, createClient } from '@libsql/client'
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql'
-import { createClient, type Client } from '@libsql/client'
 import * as schema from './schema'
 
 // Lazy initialization to avoid build-time errors

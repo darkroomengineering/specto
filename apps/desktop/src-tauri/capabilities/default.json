@@ -1,65 +1,65 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/v2/crates/tauri/schema.json",
-  "identifier": "default",
-  "description": "Default capabilities for Specto",
-  "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "shell:allow-open",
-    "updater:default",
-    "process:allow-restart",
-    "process:allow-exit",
-    "dialog:allow-save",
-    {
-      "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "$APPDATA/**" }]
-    },
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "gh-auth-token",
-          "cmd": "gh",
-          "args": ["auth", "token"],
-          "sidecar": false
-        },
-        {
-          "name": "gh-auth-token-homebrew",
-          "cmd": "/opt/homebrew/bin/gh",
-          "args": ["auth", "token"],
-          "sidecar": false
-        },
-        {
-          "name": "gh-auth-token-local",
-          "cmd": "/usr/local/bin/gh",
-          "args": ["auth", "token"],
-          "sidecar": false
-        },
-        {
-          "name": "gh-auth-login",
-          "cmd": "gh",
-          "args": ["auth", "login", "--web"],
-          "sidecar": false
-        },
-        {
-          "name": "gh-auth-login-homebrew",
-          "cmd": "/opt/homebrew/bin/gh",
-          "args": ["auth", "login", "--web"],
-          "sidecar": false
-        },
-        {
-          "name": "gh-auth-login-local",
-          "cmd": "/usr/local/bin/gh",
-          "args": ["auth", "login", "--web"],
-          "sidecar": false
-        },
-        {
-          "name": "which-gh",
-          "cmd": "which",
-          "args": ["gh"],
-          "sidecar": false
-        }
-      ]
-    }
-  ]
+	"$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/v2/crates/tauri/schema.json",
+	"identifier": "default",
+	"description": "Default capabilities for Specto",
+	"windows": ["main"],
+	"permissions": [
+		"core:default",
+		"shell:allow-open",
+		"updater:default",
+		"process:allow-restart",
+		"process:allow-exit",
+		"dialog:allow-save",
+		{
+			"identifier": "fs:allow-write-text-file",
+			"allow": [{ "path": "$APPDATA/**" }]
+		},
+		{
+			"identifier": "shell:allow-execute",
+			"allow": [
+				{
+					"name": "gh-auth-token",
+					"cmd": "gh",
+					"args": ["auth", "token"],
+					"sidecar": false
+				},
+				{
+					"name": "gh-auth-token-homebrew",
+					"cmd": "/opt/homebrew/bin/gh",
+					"args": ["auth", "token"],
+					"sidecar": false
+				},
+				{
+					"name": "gh-auth-token-local",
+					"cmd": "/usr/local/bin/gh",
+					"args": ["auth", "token"],
+					"sidecar": false
+				},
+				{
+					"name": "gh-auth-login",
+					"cmd": "gh",
+					"args": ["auth", "login", "--web"],
+					"sidecar": false
+				},
+				{
+					"name": "gh-auth-login-homebrew",
+					"cmd": "/opt/homebrew/bin/gh",
+					"args": ["auth", "login", "--web"],
+					"sidecar": false
+				},
+				{
+					"name": "gh-auth-login-local",
+					"cmd": "/usr/local/bin/gh",
+					"args": ["auth", "login", "--web"],
+					"sidecar": false
+				},
+				{
+					"name": "which-gh",
+					"cmd": "which",
+					"args": ["gh"],
+					"sidecar": false
+				}
+			]
+		}
+	]
 }

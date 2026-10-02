@@ -1,11 +1,11 @@
 // Types
-export * from './types'
-
-// GitHub client and auth
-export * from './github'
 
 // Cache
 export * from './cache'
+
+// GitHub client and auth
+export * from './github'
+export * from './types'
 
 // Utilities
 export * from './utils'

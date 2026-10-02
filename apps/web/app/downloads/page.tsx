@@ -1,6 +1,6 @@
 import { Button, Card } from '@specto/ui'
 import Link from 'next/link'
-import { getLatestRelease, type ReleaseAsset } from '@/lib/config'
+import { getLatestRelease } from '@/lib/config'
 
 // Revalidate every 60 seconds to pick up new releases quickly
 export const revalidate = 60
@@ -52,9 +52,7 @@ export default async function DownloadsPage() {
 				<p className="text-xl text-[var(--muted)] max-w-2xl mx-auto">
 					Get the desktop app for macOS or Windows. Free to use with optional Pro upgrade.
 				</p>
-				<p className="mt-4 text-sm text-[var(--muted)]">
-					Latest: v{version}
-				</p>
+				<p className="mt-4 text-sm text-[var(--muted)]">Latest: v{version}</p>
 			</section>
 
 			{/* Downloads */}
@@ -87,9 +85,7 @@ export default async function DownloadsPage() {
 														)}
 													</p>
 													{asset && (
-														<p className="text-xs text-[var(--muted)]">
-															{formatBytes(asset.size)}
-														</p>
+														<p className="text-xs text-[var(--muted)]">{formatBytes(asset.size)}</p>
 													)}
 												</div>
 												{isAvailable ? (
