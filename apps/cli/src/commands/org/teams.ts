@@ -1,5 +1,6 @@
-import { getOrgTeamsList, type OutputFormat } from '@specto/core'
+import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
+import { github } from '../../lib/github'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printTable } from '../../lib/ui/table'
 
@@ -11,9 +12,13 @@ interface TeamsOptions {
 export async function runOrgTeams(options: TeamsOptions): Promise<void> {
 	const { org, output } = options
 
-	const teams = await withSpinner(`Fetching teams...`, () => getOrgTeamsList(org), {
-		successText: 'Teams fetched',
-	})
+	const teams = await withSpinner(
+		`Fetching teams...`,
+		async () => (await (await github()).getOrgOverview(org)).teams,
+		{
+			successText: 'Teams fetched',
+		}
+	)
 
 	if (teams.length === 0) {
 		console.log(pc.yellow('No teams found'))
@@ -27,10 +32,10 @@ export async function runOrgTeams(options: TeamsOptions): Promise<void> {
 	const displayTeams = teams.map((t) => ({
 		name: t.name,
 		slug: t.slug,
-		privacy: t.privacy,
-		members: t.members_count,
-		repos: t.repos_count,
-		parent: t.parent?.name ?? '-',
+		privacy: t.privacy.toLowerCase(),
+		members: t.memberCount,
+		repos: t.repositoryCount,
+		parent: t.parentName ?? '-',
 	}))
 
 	printTable({

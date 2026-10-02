@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { AuthError } from '../src/lib/github/auth'
-import { GitHubError, RateLimitError } from '../src/lib/github/client'
+import { AuthError, GitHubError, RateLimitError } from '@specto/core'
 import { formatError } from '../src/lib/utils/errors'
 
 describe('error formatting', () => {

@@ -29,7 +29,7 @@ statsCommand
 				}
 			) => {
 				if (!org) {
-					console.error('Organization name is required. Usage: pondus stats commits <org>')
+					console.error('Organization name is required. Usage: specto stats commits <org>')
 					process.exit(1)
 				}
 

@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts'
-import { getAuthStatus } from '@specto/core'
+import { getAuthStatus } from '@specto/core/node'
 import pc from 'picocolors'
 import { runOrgActions } from './commands/org/actions'
 import { runOrgInfo } from './commands/org/info'

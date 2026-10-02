@@ -141,7 +141,8 @@ export function createGitHubClient({ token, userAgent = 'specto' }: GitHubClient
 		graphql,
 
 		getOrganization: (login: string) => request<Organization>(org(login)),
-		listOrgMembers: (login: string) => list<Member>(`${org(login)}/members`),
+		listOrgMembers: (login: string, role: 'all' | 'admin' | 'member' = 'all') =>
+			list<Member>(`${org(login)}/members`, { params: { role } }),
 		listOrgRepos: (login: string) =>
 			list<Repository>(`${org(login)}/repos`, { params: { type: 'all', sort: 'pushed' } }),
 		listOrgTeams: (login: string) => list<Team>(`${org(login)}/teams`),
@@ -187,6 +188,8 @@ const ORG_OVERVIEW_QUERY = `
 					privacy
 					url
 					members { totalCount }
+					repositories { totalCount }
+					parentTeam { name }
 				}
 			}
 		}
@@ -214,6 +217,8 @@ interface OrgOverviewResponse {
 				privacy: 'SECRET' | 'VISIBLE'
 				url: string
 				members: { totalCount: number }
+				repositories: { totalCount: number }
+				parentTeam: { name: string } | null
 			}>
 		} | null
 	}
@@ -232,9 +237,11 @@ async function getOrgOverview(graphql: GraphQL, login: string): Promise<OrgOverv
 		createdAt: o.createdAt,
 		repositoryCount: o.repositories.totalCount,
 		memberCount: o.membersWithRole.totalCount,
-		teams: (o.teams?.nodes ?? []).map(({ members, ...team }) => ({
+		teams: (o.teams?.nodes ?? []).map(({ members, repositories, parentTeam, ...team }) => ({
 			...team,
 			memberCount: members.totalCount,
+			repositoryCount: repositories.totalCount,
+			parentName: parentTeam?.name ?? null,
 		})),
 	}
 }

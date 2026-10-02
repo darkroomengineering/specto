@@ -180,6 +180,8 @@ export interface OrgTeam {
 	privacy: 'SECRET' | 'VISIBLE'
 	url: string
 	memberCount: number
+	repositoryCount: number
+	parentName: string | null
 }
 
 export interface OrgOverview {

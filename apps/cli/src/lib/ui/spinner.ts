@@ -58,28 +58,3 @@ export async function withSpinner<T>(
 		throw error
 	}
 }
-
-export function createProgressSpinner(
-	total: number,
-	prefix: string
-): {
-	update: (current: number, item?: string) => void
-	succeed: (text?: string) => void
-	fail: (text?: string) => void
-} {
-	const spinner = startSpinner(`${prefix} (0/${total})`)
-
-	return {
-		update: (current: number, item?: string) => {
-			const percent = Math.round((current / total) * 100)
-			const itemText = item ? ` - ${pc.dim(item)}` : ''
-			spinner.text = `${prefix} (${current}/${total}) ${pc.dim(`${percent}%`)}${itemText}`
-		},
-		succeed: (text?: string) => {
-			spinner.succeed(text ?? `${prefix} (${total}/${total})`)
-		},
-		fail: (text?: string) => {
-			spinner.fail(text)
-		},
-	}
-}

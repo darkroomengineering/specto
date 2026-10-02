@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util'
 import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
 
@@ -26,7 +27,7 @@ function padString(
 	width: number,
 	align: 'left' | 'right' | 'center' = 'left'
 ): string {
-	const stripped = stripAnsi(str)
+	const stripped = stripVTControlCharacters(str)
 	const padding = Math.max(0, width - stripped.length)
 
 	if (align === 'right') {
@@ -38,10 +39,6 @@ function padString(
 		return ' '.repeat(leftPad) + str + ' '.repeat(rightPad)
 	}
 	return str + ' '.repeat(padding)
-}
-
-function stripAnsi(str: string): string {
-	return str.replace(/\x1b\[[0-9;]*m/g, '')
 }
 
 export function renderTable<T>(options: TableOptions<T>): string {
@@ -60,7 +57,10 @@ export function renderTable<T>(options: TableOptions<T>): string {
 	// Calculate column widths
 	const widths = columns.map((col) => {
 		const headerWidth = col.header.length
-		const maxValueWidth = Math.max(...rows.map((row) => stripAnsi(getValue(row, col)).length), 0)
+		const maxValueWidth = Math.max(
+			...rows.map((row) => stripVTControlCharacters(getValue(row, col)).length),
+			0
+		)
 		return col.width ?? Math.max(headerWidth, maxValueWidth)
 	})
 

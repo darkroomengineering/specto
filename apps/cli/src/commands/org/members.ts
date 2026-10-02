@@ -1,5 +1,6 @@
-import { getOrgMembersList, type OutputFormat } from '@specto/core'
+import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
+import { github } from '../../lib/github'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printTable } from '../../lib/ui/table'
 
@@ -10,11 +11,15 @@ interface MembersOptions {
 }
 
 export async function runOrgMembers(options: MembersOptions): Promise<void> {
-	const { org, output, role } = options
+	const { org, output, role = 'all' } = options
 
-	const members = await withSpinner(`Fetching members...`, () => getOrgMembersList(org), {
-		successText: 'Members fetched',
-	})
+	const members = await withSpinner(
+		`Fetching members...`,
+		async () => (await github()).listOrgMembers(org, role),
+		{
+			successText: 'Members fetched',
+		}
+	)
 
 	if (members.length === 0) {
 		console.log(pc.yellow('No members found'))

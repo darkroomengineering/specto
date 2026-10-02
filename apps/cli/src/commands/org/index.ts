@@ -17,7 +17,7 @@ orgCommand
 	.action(
 		wrapCommand(async (org: string | undefined, options: { output: string }) => {
 			if (!org) {
-				console.error('Organization name is required. Usage: pondus org info <org>')
+				console.error('Organization name is required. Usage: specto org info <org>')
 				process.exit(1)
 			}
 			await runOrgInfo({ org, output: options.output as OutputFormat })
@@ -33,7 +33,7 @@ orgCommand
 	.action(
 		wrapCommand(async (org: string | undefined, options: { role: string; output: string }) => {
 			if (!org) {
-				console.error('Organization name is required. Usage: pondus org members <org>')
+				console.error('Organization name is required. Usage: specto org members <org>')
 				process.exit(1)
 			}
 			await runOrgMembers({
@@ -52,7 +52,7 @@ orgCommand
 	.action(
 		wrapCommand(async (org: string | undefined, options: { output: string }) => {
 			if (!org) {
-				console.error('Organization name is required. Usage: pondus org teams <org>')
+				console.error('Organization name is required. Usage: specto org teams <org>')
 				process.exit(1)
 			}
 			await runOrgTeams({ org, output: options.output as OutputFormat })
@@ -67,7 +67,7 @@ orgCommand
 	.action(
 		wrapCommand(async (org: string | undefined, options: { output: string }) => {
 			if (!org) {
-				console.error('Organization name is required. Usage: pondus org webhooks <org>')
+				console.error('Organization name is required. Usage: specto org webhooks <org>')
 				process.exit(1)
 			}
 			await runOrgWebhooks({ org, output: options.output as OutputFormat })
@@ -88,7 +88,7 @@ orgCommand
 				options: { runners: boolean; secrets: boolean; output: string }
 			) => {
 				if (!org) {
-					console.error('Organization name is required. Usage: pondus org actions <org>')
+					console.error('Organization name is required. Usage: specto org actions <org>')
 					process.exit(1)
 				}
 				await runOrgActions({

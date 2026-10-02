@@ -1,4 +1,4 @@
-import { getAuthStatus, isGhCliAvailable } from '@specto/core'
+import { getAuthStatus, isGhCliAvailable } from '@specto/core/node'
 import { Command } from 'commander'
 import pc from 'picocolors'
 import { printError, printKeyValue, printSuccess, printWarning } from '../../lib/ui/table'
