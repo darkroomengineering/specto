@@ -1,12 +1,12 @@
 {
 	"$schema": "https://turbo.build/schema.json",
 	"globalEnv": [
-		"POLAR_ACCESS_TOKEN",
-		"POLAR_WEBHOOK_SECRET",
-		"TURSO_DATABASE_URL",
-		"TURSO_AUTH_TOKEN",
 		"GITHUB_TOKEN",
-		"NEXT_PUBLIC_APP_URL"
+		"MASTER_LICENSE_KEY",
+		"NEXT_PUBLIC_APP_URL",
+		"POLAR_ACCESS_TOKEN",
+		"POLAR_ORGANIZATION_ID",
+		"POLAR_SERVER"
 	],
 	"tasks": {
 		"build": {
