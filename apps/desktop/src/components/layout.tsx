@@ -46,18 +46,18 @@ export function Layout() {
 	}, [])
 
 	// Track org visits - only add to history if org was found
-	const { orgData, notFound } = useGitHubStore()
+	const { overview, notFound } = useGitHubStore()
 	useEffect(() => {
 		const match = location.pathname.match(/^\/org\/(.+)$/)
 		const orgLogin = match?.[1]
 		// Only add to history if we have org info (meaning it was found)
-		if (orgLogin && orgData.info && !notFound) {
-			const newOrg = { login: orgLogin, avatar_url: orgData.info.avatar_url }
+		if (orgLogin && overview && !notFound) {
+			const newOrg = { login: orgLogin, avatar_url: overview.avatarUrl }
 			const updated = [newOrg, ...recentOrgs.filter((o) => o.login !== orgLogin)].slice(0, 5)
 			localStorage.setItem('specto:recent-orgs', JSON.stringify(updated))
 			setRecentOrgs(updated)
 		}
-	}, [location.pathname, orgData.info, notFound, recentOrgs.filter])
+	}, [location.pathname, overview, notFound, recentOrgs.filter])
 
 	// Keyboard shortcut for search (CMD+K)
 	useEffect(() => {
@@ -114,7 +114,13 @@ export function Layout() {
 						whileHover={{ scale: 1.01 }}
 						whileTap={{ scale: 0.99 }}
 					>
-						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -142,7 +148,13 @@ export function Layout() {
 							)
 						}
 					>
-						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -163,7 +175,7 @@ export function Layout() {
 							)
 						}
 					>
-						<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+						<svg aria-hidden="true" className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 						</svg>
 						<span>Leaderboard</span>
@@ -225,7 +237,13 @@ export function Layout() {
 							)
 						}
 					>
-						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -311,6 +329,7 @@ export function Layout() {
 								)}
 							>
 								<svg
+									aria-hidden="true"
 									className="w-5 h-5 text-[var(--accent)] flex-shrink-0"
 									fill="none"
 									stroke="currentColor"

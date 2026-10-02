@@ -34,20 +34,22 @@ interface AuthState {
 	username: string | null
 	error: string | null
 	ghNotInstalled: boolean
+	token: string | null
 	checkAuth: () => Promise<void>
 	getToken: () => Promise<string | null>
 	login: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
 	isAuthenticated: false,
 	isLoading: true,
 	username: null,
 	error: null,
 	ghNotInstalled: false,
+	token: null,
 
 	checkAuth: async () => {
-		set({ isLoading: true, error: null, ghNotInstalled: false })
+		set({ isLoading: true, error: null, ghNotInstalled: false, token: null })
 
 		try {
 			const result = await tryGetToken()
@@ -86,6 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 			set({
 				isAuthenticated: true,
 				isLoading: false,
+				token: result.token,
 				username: user.login,
 				error: null,
 				ghNotInstalled: false,
@@ -102,7 +105,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 	},
 
 	getToken: async () => {
+		const cached = get().token
+		if (cached) return cached
 		const result = await tryGetToken()
+		if (result) set({ token: result.token })
 		return result?.token ?? null
 	},
 

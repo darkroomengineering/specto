@@ -2,6 +2,8 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+const isDebug = process.env['TAURI_ENV_DEBUG'] === 'true'
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [react()],
@@ -23,9 +25,10 @@ export default defineConfig({
 	// Tauri env variables
 	envPrefix: ['VITE_', 'TAURI_'],
 	build: {
+		// Tauri sets TAURI_ENV_DEBUG to the string 'true' or 'false'
 		// Tauri uses Chromium on Windows and WebKit on macOS/Linux
-		target: process.env['TAURI_PLATFORM'] === 'windows' ? 'chrome105' : 'safari14',
-		minify: !process.env['TAURI_DEBUG'] ? 'esbuild' : false,
-		sourcemap: !!process.env['TAURI_DEBUG'],
+		target: process.env['TAURI_ENV_PLATFORM'] === 'windows' ? 'chrome105' : 'safari14',
+		minify: !isDebug,
+		sourcemap: isDebug,
 	},
 })

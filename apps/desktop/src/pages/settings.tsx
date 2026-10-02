@@ -11,7 +11,13 @@ import { useThemeStore } from '../stores/theme'
 const PRO_FEATURES = [
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -25,7 +31,13 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -39,7 +51,13 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -53,7 +71,13 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -67,7 +91,13 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -81,7 +111,13 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
@@ -98,8 +134,6 @@ const PRO_FEATURES = [
 export function Settings() {
 	const { isAuthenticated, isLoading, username, error, checkAuth } = useAuthStore()
 	const {
-		licenseKey,
-		isPro: licenseIsPro,
 		isValidating,
 		error: licenseError,
 		activatedAt,
@@ -290,6 +324,7 @@ export function Settings() {
 								<div className="flex items-center gap-3">
 									<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center">
 										<svg
+											aria-hidden="true"
 											className="w-5 h-5 text-white"
 											fill="none"
 											stroke="currentColor"
@@ -320,6 +355,7 @@ export function Settings() {
 									<div className="p-4 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20">
 										<div className="flex items-center gap-2 mb-3">
 											<svg
+												aria-hidden="true"
 												className="w-5 h-5 text-[var(--accent)]"
 												fill="none"
 												stroke="currentColor"
@@ -390,9 +426,12 @@ export function Settings() {
 
 									{/* License key input */}
 									<div className="space-y-3">
-										<label className="block text-sm font-medium">Enter license key</label>
+										<label htmlFor="license-key" className="block text-sm font-medium">
+											Enter license key
+										</label>
 										<div className="flex gap-2">
 											<input
+												id="license-key"
 												type="text"
 												value={keyInput}
 												onChange={(e) => setKeyInput(e.target.value)}
@@ -433,9 +472,9 @@ export function Settings() {
 						</Card.Header>
 						<Card.Content>
 							<div className="grid grid-cols-1 gap-4">
-								{PRO_FEATURES.map((feature, index) => (
+								{PRO_FEATURES.map((feature) => (
 									<div
-										key={index}
+										key={feature.title}
 										className={`flex gap-3 p-3 rounded-lg border transition-colors ${
 											isPro
 												? 'border-[var(--accent)]/20 bg-[var(--accent)]/5'
@@ -453,6 +492,7 @@ export function Settings() {
 										</div>
 										{isPro && (
 											<svg
+												aria-hidden="true"
 												className="w-4 h-4 text-[var(--accent)] ml-auto flex-shrink-0"
 												fill="none"
 												stroke="currentColor"
