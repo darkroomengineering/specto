@@ -26,7 +26,8 @@ const exportSchema = z.object({
 type ExportData = z.infer<typeof exportSchema>['data']
 
 function csvCell(value: string | number): string {
-	const text = String(value)
+	// Neutralize spreadsheet formulas in client-supplied strings
+	const text = typeof value === 'string' && /^[=+\-@]/.test(value) ? `'${value}` : String(value)
 	return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
