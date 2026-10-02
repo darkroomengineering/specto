@@ -80,11 +80,13 @@ interface RepoSearch {
 	items?: { stargazers_count?: number }[]
 }
 
+class RateLimitedError extends Error {}
+
 async function fetchGitHub<T>(url: string): Promise<T | null> {
 	const res = await fetch(url, { headers: getGitHubHeaders(), next: { revalidate: 3600 } })
+	// Throw instead of returning partial data: a missing star count would rank the org as zero
 	if (res.status === 403 || res.status === 429) {
-		console.error(`GitHub API rate limited (${url})! Add GITHUB_TOKEN to .env.local`)
-		return null
+		throw new RateLimitedError(`GitHub API rate limited (${url}). Add GITHUB_TOKEN to .env.local`)
 	}
 	if (!res.ok) {
 		console.warn(`GitHub request failed (${url}): ${res.status}`)
@@ -102,7 +104,7 @@ async function fetchOrgDetails(orgLogin: string): Promise<OrgStats | null> {
 				`https://api.github.com/search/repositories?q=org:${orgLogin}&sort=stars&order=desc&per_page=100`
 			),
 		])
-		if (!org) return null
+		if (!org || !search) return null
 
 		return {
 			name: org.login,
@@ -110,10 +112,11 @@ async function fetchOrgDetails(orgLogin: string): Promise<OrgStats | null> {
 			description: org.description,
 			repos: org.public_repos || 0,
 			followers: org.followers || 0,
-			stars: (search?.items ?? []).reduce((sum, r) => sum + (r.stargazers_count || 0), 0),
+			stars: (search.items ?? []).reduce((sum, r) => sum + (r.stargazers_count || 0), 0),
 			activityScore: 0, // Calculated after fetching all
 		}
 	} catch (error) {
+		if (error instanceof RateLimitedError) throw error
 		console.error(`Failed to fetch ${orgLogin}:`, error)
 		return null
 	}
@@ -148,11 +151,20 @@ async function fetchLeaderboardData(category: LeaderboardCategory): Promise<OrgS
 	return calculateScores(validOrgs).sort((a, b) => b.activityScore - a.activityScore)
 }
 
-/**
- * Get leaderboard data with Next.js caching (ISR)
- * Caches data for 30 minutes, revalidates in background
- */
-export const getLeaderboardData = unstable_cache(fetchLeaderboardData, ['leaderboard'], {
+const getCachedLeaderboardData = unstable_cache(fetchLeaderboardData, ['leaderboard'], {
 	revalidate: 1800, // 30 minutes
 	tags: ['leaderboard'],
 })
+
+/**
+ * Leaderboard data cached for 30 minutes. A rate-limited fetch throws inside the cache, so it is
+ * never stored; that request gets the fallback data and the next one retries.
+ */
+export async function getLeaderboardData(category: LeaderboardCategory): Promise<OrgStats[]> {
+	try {
+		return await getCachedLeaderboardData(category)
+	} catch (error) {
+		console.error(error instanceof Error ? error.message : error)
+		return LEADERBOARD_FALLBACK[category]
+	}
+}

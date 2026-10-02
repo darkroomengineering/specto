@@ -1,4 +1,3 @@
-import { LEADERBOARD_FALLBACK } from '@specto/core'
 import { Button, Card } from '@specto/ui'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,14 +16,8 @@ function formatNumber(num: number): string {
 }
 
 export default async function Home() {
-	// Fetch live leaderboard data for initial render
-	let leaderboardData = LEADERBOARD_FALLBACK['developer-favorites']
-	try {
-		const live = await getLeaderboardData('developer-favorites')
-		if (live.length > 0) leaderboardData = live
-	} catch {
-		// Use fallback data on error
-	}
+	// getLeaderboardData falls back to static data on its own
+	const leaderboardData = await getLeaderboardData('developer-favorites')
 
 	return (
 		<div className="min-h-screen bg-[var(--background)]">
