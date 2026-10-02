@@ -7,34 +7,24 @@
 	"types": "dist/index.d.ts",
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
-			"types": "./dist/index.d.ts"
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
 		},
-		"./browser": {
-			"import": "./dist/browser.js",
-			"types": "./dist/browser.d.ts"
-		},
-		"./github": {
-			"import": "./dist/github/index.js",
-			"types": "./dist/github/index.d.ts"
-		},
-		"./cache": {
-			"import": "./dist/cache/index.js",
-			"types": "./dist/cache/index.d.ts"
-		},
-		"./utils": {
-			"import": "./dist/utils/index.js",
-			"types": "./dist/utils/index.d.ts"
+		"./node": {
+			"types": "./dist/node.d.ts",
+			"import": "./dist/node.js"
 		}
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "rm -rf dist && tsc",
 		"dev": "tsc --watch",
 		"typecheck": "tsc --noEmit",
-		"clean": "rm -rf dist"
+		"clean": "rm -rf dist",
+		"test": "bun test"
 	},
 	"devDependencies": {
-		"@types/node": "^25.9.9"
+		"@types/node": "^25.9.9",
+		"@types/bun": "^1.4.2"
 	},
 	"author": "Specto",
 	"license": "MIT"
