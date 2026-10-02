@@ -2,6 +2,9 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
 	transpilePackages: ['@specto/ui'],
+	images: {
+		remotePatterns: [{ protocol: 'https', hostname: 'avatars.githubusercontent.com' }],
+	},
 	async headers() {
 		return [
 			{

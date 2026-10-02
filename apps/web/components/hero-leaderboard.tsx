@@ -1,15 +1,9 @@
 'use client'
 
+import { LEADERBOARD_CATEGORIES, type LeaderboardCategory, type OrgStats } from '@specto/core'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import type { LeaderboardCategory, OrgStats } from '@/lib/github'
-
-const LEADERBOARD_CATEGORIES = [
-	{ value: 'developer-favorites', label: 'Developer Favorites' },
-	{ value: 'frameworks', label: 'Frameworks' },
-	{ value: 'databases', label: 'Databases & Infra' },
-	{ value: 'rising-stars', label: 'Rising Stars' },
-] as const
 
 function formatNumber(num: number): string {
 	if (num >= 1000000) {
@@ -26,7 +20,12 @@ function RankBadge({ rank }: { rank: number }) {
 		return (
 			<div className="relative">
 				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+					<svg
+						aria-hidden="true"
+						className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+						fill="currentColor"
+						viewBox="0 0 24 24"
+					>
 						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 					</svg>
 				</div>
@@ -40,7 +39,12 @@ function RankBadge({ rank }: { rank: number }) {
 		return (
 			<div className="relative">
 				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 flex items-center justify-center shadow-lg shadow-gray-400/30">
-					<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+					<svg
+						aria-hidden="true"
+						className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+						fill="currentColor"
+						viewBox="0 0 24 24"
+					>
 						<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 					</svg>
 				</div>
@@ -53,7 +57,12 @@ function RankBadge({ rank }: { rank: number }) {
 	return (
 		<div className="relative">
 			<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/30">
-				<svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+				<svg
+					aria-hidden="true"
+					className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+					fill="currentColor"
+					viewBox="0 0 24 24"
+				>
 					<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 				</svg>
 			</div>
@@ -108,9 +117,8 @@ export function HeroLeaderboard({
 	}))
 
 	return (
-		<div
+		<section
 			className="relative max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200"
-			role="region"
 			aria-label="Organization leaderboard"
 		>
 			{/* Glow effect behind */}
@@ -123,7 +131,12 @@ export function HeroLeaderboard({
 				{/* Header with Category Selector */}
 				<div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] to-[var(--background)]">
 					<div className="flex items-center gap-2">
-						<svg className="w-5 h-5 text-[var(--accent)]" fill="currentColor" viewBox="0 0 24 24">
+						<svg
+							aria-hidden="true"
+							className="w-5 h-5 text-[var(--accent)]"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
 						</svg>
 						<div className="relative">
@@ -144,6 +157,7 @@ export function HeroLeaderboard({
 								))}
 							</select>
 							<svg
+								aria-hidden="true"
 								className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)] pointer-events-none"
 								fill="none"
 								stroke="currentColor"
@@ -164,13 +178,7 @@ export function HeroLeaderboard({
 				</div>
 
 				{/* Leaderboard entries */}
-				<div
-					className="divide-y divide-[var(--border)]"
-					role="list"
-					aria-label="Top organizations"
-					aria-live="polite"
-					aria-busy={isLoading}
-				>
+				<div className="divide-y divide-[var(--border)]" aria-live="polite" aria-busy={isLoading}>
 					{isLoading
 						? // Loading skeleton
 							[1, 2, 3].map((i) => (
@@ -203,9 +211,11 @@ export function HeroLeaderboard({
 									style={{ animationDelay: `${index * 80}ms` }}
 								>
 									<RankBadge rank={org.rank} />
-									<img
+									<Image
 										src={`${org.avatarUrl}?s=80`}
 										alt={`${org.name} logo`}
+										width={48}
+										height={48}
 										className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-[var(--border)]"
 									/>
 									<div className="flex-1 min-w-0">
@@ -237,12 +247,18 @@ export function HeroLeaderboard({
 						className="flex items-center justify-center gap-2 text-sm text-[var(--accent)] hover:underline"
 					>
 						View full rankings
-						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg
+							aria-hidden="true"
+							className="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
 						</svg>
 					</Link>
 				</div>
 			</div>
-		</div>
+		</section>
 	)
 }
