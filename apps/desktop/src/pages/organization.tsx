@@ -256,8 +256,13 @@ export function Organization() {
 		const data =
 			metricType === 'commits' ? commitStats : metricType === 'prs' ? prStats : issueStats
 
+		// Commit shares use attributed commits: the rest have no GitHub user or are from bots
 		const total =
-			metricType === 'commits' ? totalCommits : metricType === 'prs' ? totalPRs : totalIssues
+			metricType === 'commits'
+				? (commits?.attributed ?? 0)
+				: metricType === 'prs'
+					? totalPRs
+					: totalIssues
 
 		if (isLoadingData && data.length === 0) {
 			return (

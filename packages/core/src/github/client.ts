@@ -6,9 +6,7 @@ import type {
 	OrgOverview,
 	OrgSecret,
 	OrgSuggestion,
-	Repository,
 	Runner,
-	Team,
 	Webhook,
 } from '../types'
 import {
@@ -136,16 +134,12 @@ export function createGitHubClient({ token, userAgent = 'specto' }: GitHubClient
 
 	return {
 		request,
-		paginate,
 		list,
 		graphql,
 
 		getOrganization: (login: string) => request<Organization>(org(login)),
 		listOrgMembers: (login: string, role: 'all' | 'admin' | 'member' = 'all') =>
 			list<Member>(`${org(login)}/members`, { params: { role } }),
-		listOrgRepos: (login: string) =>
-			list<Repository>(`${org(login)}/repos`, { params: { type: 'all', sort: 'pushed' } }),
-		listOrgTeams: (login: string) => list<Team>(`${org(login)}/teams`),
 		listUserOrgs: () => list<Organization>('/user/orgs'),
 		getOrgWebhooks: (login: string) => list<Webhook>(`${org(login)}/hooks`),
 		getActionsSettings: (login: string) =>

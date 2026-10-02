@@ -93,7 +93,7 @@ describe('REST', () => {
 
 	test('throws GitHubError on API error', async () => {
 		mockFetch(() => new Response('Not found', { status: 404, statusText: 'Not Found' }))
-		await expect(gh.paginate('/test').next()).rejects.toThrow(GitHubError)
+		await expect(gh.list('/test')).rejects.toThrow(GitHubError)
 	})
 
 	test('throws RateLimitError when the quota is exhausted', async () => {
