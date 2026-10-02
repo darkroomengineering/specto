@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { statsCommand } from './commands/stats'
-import { orgCommand } from './commands/org'
+import { version } from '../package.json'
 import { configCommand } from './commands/config'
+import { orgCommand } from './commands/org'
+import { statsCommand } from './commands/stats'
 import { runInteractive } from './interactive'
 
 const program = new Command()
@@ -11,7 +12,7 @@ const program = new Command()
 program
 	.name('specto')
 	.description('GitHub organization metrics and settings CLI')
-	.version('1.0.0')
+	.version(version)
 	.addHelpText(
 		'after',
 		`

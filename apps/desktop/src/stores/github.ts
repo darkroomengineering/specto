@@ -1,58 +1,120 @@
+import {
+	type CommitActivity,
+	createGitHubClient,
+	type GitHubClient,
+	GitHubError,
+	type IssueActivity,
+	type OrgOverview,
+	type OrgSuggestion,
+	type PullRequestActivity,
+	RateLimitError,
+} from '@specto/core'
 import { create } from 'zustand'
 import { useAuthStore } from './auth'
-// Use browser-safe imports (no Node.js modules)
-import {
-	type Organization,
-	type Member,
-	type Team,
-	type Repository,
-	type CommitStats,
-	// Caching utilities
-	MemoryCache,
-	deduplicatedFetch,
-	batchProcess,
-} from '@specto/core/browser'
 
 export type Timeframe = '7d' | '30d' | '90d' | 'ytd' | 'all'
 export type MetricType = 'commits' | 'prs' | 'issues' | 'reviews'
 
-// Shared cache instance with 5-minute TTL
-const cache = new MemoryCache({
-	ttl: 5 * 60 * 1000,
-	maxEntries: 500,
-	staleWhileRevalidate: 60 * 1000, // 1 minute stale-while-revalidate
-})
+interface Activity {
+	commits: CommitActivity
+	prs: PullRequestActivity
+	issues: IssueActivity
+}
+
+interface LoadingState {
+	overview: boolean
+	commits: boolean
+	prs: boolean
+	issues: boolean
+}
+
+const IDLE: LoadingState = { overview: false, commits: false, prs: false, issues: false }
+const BUSY: LoadingState = { overview: true, commits: true, prs: true, issues: true }
+
+// In-memory per-session cache so switching back to an org or timeframe does not refetch
+const MEMORY_TTL = 5 * 60 * 1000
+const memoryCache = new Map<string, { at: number; value: unknown }>()
+
+function memoryGet<T>(key: string): T | undefined {
+	const hit = memoryCache.get(key)
+	if (!hit) return undefined
+	if (Date.now() - hit.at > MEMORY_TTL) {
+		memoryCache.delete(key)
+		return undefined
+	}
+	return hit.value as T
+}
+
+function memorySet(key: string, value: unknown): void {
+	memoryCache.set(key, { at: Date.now(), value })
+}
 
 // Persistent localStorage cache for offline support
 const OFFLINE_CACHE_PREFIX = 'specto:cache:org:'
 
-interface OfflineCacheEntry<T> {
-	data: T
-	timestamp: number
+interface OfflineData {
+	overview: OrgOverview
+	timeframe: Timeframe
+	activity: Activity | null
 }
 
-function saveToOfflineCache<T>(orgName: string, data: T): void {
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
+}
+
+function isActivity(value: unknown): value is Activity {
+	if (!isRecord(value)) return false
+	const { commits, prs, issues } = value
+	return (
+		isRecord(commits) &&
+		Array.isArray(commits['byAuthor']) &&
+		typeof commits['total'] === 'number' &&
+		isRecord(prs) &&
+		Array.isArray(prs['byAuthor']) &&
+		typeof prs['total'] === 'number' &&
+		isRecord(issues) &&
+		Array.isArray(issues['byAuthor']) &&
+		typeof issues['total'] === 'number'
+	)
+}
+
+function isOfflineData(value: unknown): value is OfflineData {
+	if (!isRecord(value)) return false
+	const { overview, timeframe, activity } = value
+	return (
+		isRecord(overview) &&
+		typeof overview['avatarUrl'] === 'string' &&
+		typeof overview['repositoryCount'] === 'number' &&
+		typeof overview['memberCount'] === 'number' &&
+		Array.isArray(overview['teams']) &&
+		typeof timeframe === 'string' &&
+		(activity === null || isActivity(activity))
+	)
+}
+
+function saveToOfflineCache(org: string, data: OfflineData): void {
 	try {
-		const entry: OfflineCacheEntry<T> = {
-			data,
-			timestamp: Date.now(),
-		}
-		localStorage.setItem(`${OFFLINE_CACHE_PREFIX}${orgName}`, JSON.stringify(entry))
+		localStorage.setItem(
+			`${OFFLINE_CACHE_PREFIX}${org}`,
+			JSON.stringify({ data, timestamp: Date.now() })
+		)
 	} catch {
 		// localStorage might be full or unavailable
 	}
 }
 
-function loadFromOfflineCache<T>(orgName: string): OfflineCacheEntry<T> | null {
+// Entries written by older versions have a different shape and are discarded
+function loadFromOfflineCache(org: string): { data: OfflineData; timestamp: number } | null {
 	try {
-		const stored = localStorage.getItem(`${OFFLINE_CACHE_PREFIX}${orgName}`)
-		if (stored) {
-			const parsed = JSON.parse(stored)
-			// Validate the parsed data has expected structure
-			if (parsed && typeof parsed === 'object' && 'data' in parsed && 'timestamp' in parsed) {
-				return parsed as OfflineCacheEntry<T>
-			}
-			return null
+		const stored = localStorage.getItem(`${OFFLINE_CACHE_PREFIX}${org}`)
+		if (!stored) return null
+		const parsed: unknown = JSON.parse(stored)
+		if (
+			isRecord(parsed) &&
+			typeof parsed['timestamp'] === 'number' &&
+			isOfflineData(parsed['data'])
+		) {
+			return { data: parsed['data'], timestamp: parsed['timestamp'] }
 		}
 	} catch {
 		// Invalid JSON or localStorage unavailable
@@ -67,122 +129,7 @@ function formatCacheAge(timestamp: number): string {
 	if (minutes < 60) return `${minutes}m ago`
 	const hours = Math.floor(minutes / 60)
 	if (hours < 24) return `${hours}h ago`
-	const days = Math.floor(hours / 24)
-	return `${days}d ago`
-}
-
-// Pagination helper - fetches all pages from GitHub API
-async function fetchAllPages<T>(
-	endpoint: string,
-	token: string,
-	params: Record<string, string | number | undefined> = {},
-	maxPages = 10
-): Promise<T[]> {
-	const results: T[] = []
-	let page = 1
-	const perPage = 100
-
-	while (page <= maxPages) {
-		const url = new URL(`https://api.github.com${endpoint}`)
-		url.searchParams.set('per_page', String(perPage))
-		url.searchParams.set('page', String(page))
-
-		for (const [key, value] of Object.entries(params)) {
-			if (value !== undefined) {
-				url.searchParams.set(key, String(value))
-			}
-		}
-
-		const response = await fetch(url.toString(), {
-			headers: {
-				Authorization: `Bearer ${token}`,
-				Accept: 'application/vnd.github+json',
-			},
-		})
-
-		if (!response.ok) {
-			throw new Error(`GitHub API error: ${response.status}`)
-		}
-
-		const data = (await response.json()) as T[]
-
-		if (data.length === 0) break
-
-		results.push(...data)
-
-		// If we got fewer than perPage, we've reached the end
-		if (data.length < perPage) break
-
-		page++
-	}
-
-	return results
-}
-
-interface PRStats {
-	author: string
-	count: number
-	merged: number
-}
-
-interface IssueStats {
-	author: string
-	opened: number
-	closed: number
-}
-
-interface OrgData {
-	info: Organization | null
-	members: Member[]
-	teams: Team[]
-	repos: Repository[]
-	commitStats: CommitStats[]
-	prStats: PRStats[]
-	issueStats: IssueStats[]
-	totalCommits: number
-	totalPRs: number
-	totalIssues: number
-	totalLinesAdded: number
-	totalLinesDeleted: number
-}
-
-interface OrgSuggestion {
-	login: string
-	avatar_url: string
-	description: string | null
-}
-
-interface GitHubState {
-	currentOrg: string | null
-	orgData: OrgData
-	timeframe: Timeframe
-	metricType: MetricType
-	isLoading: {
-		info: boolean
-		members: boolean
-		teams: boolean
-		repos: boolean
-		commits: boolean
-		prs: boolean
-		issues: boolean
-	}
-	error: string | null
-	notFound: boolean
-	suggestions: OrgSuggestion[]
-	cacheAge: string | null // For showing "Last updated X ago" when using cached data
-	isUsingCachedData: boolean
-	setOrg: (org: string) => void
-	setTimeframe: (tf: Timeframe) => void
-	setMetricType: (mt: MetricType) => void
-	fetchOrgInfo: () => Promise<void>
-	fetchMembers: () => Promise<void>
-	fetchTeams: () => Promise<void>
-	fetchRepos: () => Promise<void>
-	fetchCommitStats: () => Promise<void>
-	fetchPRStats: () => Promise<void>
-	fetchIssueStats: () => Promise<void>
-	fetchAll: () => Promise<void>
-	clearCache: () => void
+	return `${Math.floor(hours / 24)}d ago`
 }
 
 function getDateSince(timeframe: Timeframe): string {
@@ -205,531 +152,223 @@ function getDateSince(timeframe: Timeframe): string {
 	return now.toISOString()
 }
 
-/**
- * Cached GitHub fetch with deduplication
- */
-async function cachedGitHubFetch<T>(
-	cacheKey: string,
-	fetcher: () => Promise<T>,
-	skipCache = false
-): Promise<T> {
-	// Check cache first (unless skipped)
-	if (!skipCache) {
-		const cached = await cache.get<T>(cacheKey)
-		if (cached && Date.now() < cached.expiresAt) {
-			return cached.data
-		}
-	}
+let client: { token: string; gh: GitHubClient } | null = null
 
-	// Use deduplication for concurrent requests
-	const data = await deduplicatedFetch(cacheKey, fetcher)
-
-	// Store in cache
-	await cache.set(cacheKey, cache.createEntry(data))
-
-	return data
+async function getClient(): Promise<GitHubClient> {
+	const token = await useAuthStore.getState().getToken()
+	if (!token) throw new Error('Not authenticated')
+	if (client?.token !== token) client = { token, gh: createGitHubClient({ token }) }
+	return client.gh
 }
+
+function describeError(err: unknown, fallback: string): string {
+	if (err instanceof RateLimitError) {
+		return `GitHub rate limit reached. Resets at ${err.resetAt.toLocaleTimeString()}.`
+	}
+	if (err instanceof GitHubError && err.status === 401) {
+		// The cached token was revoked or expired; the next call re-reads it from gh
+		useAuthStore.setState({ token: null })
+		return 'GitHub rejected the token. Run: gh auth login'
+	}
+	return err instanceof Error ? err.message : fallback
+}
+
+interface GitHubState {
+	currentOrg: string | null
+	overview: OrgOverview | null
+	commits: CommitActivity | null
+	prs: PullRequestActivity | null
+	issues: IssueActivity | null
+	timeframe: Timeframe
+	metricType: MetricType
+	isLoading: LoadingState
+	error: string | null
+	activityError: string | null
+	notFound: boolean
+	suggestions: OrgSuggestion[]
+	cacheAge: string | null // For showing "Last updated X ago" when using cached data
+	isUsingCachedData: boolean
+	setOrg: (org: string) => void
+	setTimeframe: (tf: Timeframe) => void
+	setMetricType: (mt: MetricType) => void
+	fetchOverview: () => Promise<void>
+	fetchActivity: () => Promise<void>
+	fetchAll: () => Promise<void>
+	clearCache: () => void
+}
+
+const EMPTY_ORG = {
+	overview: null,
+	commits: null,
+	prs: null,
+	issues: null,
+	error: null,
+	activityError: null,
+	notFound: false,
+	suggestions: [] as OrgSuggestion[],
+	cacheAge: null,
+	isUsingCachedData: false,
+} as const
 
 export const useGitHubStore = create<GitHubState>((set, get) => ({
 	currentOrg: null,
-	orgData: {
-		info: null,
-		members: [],
-		teams: [],
-		repos: [],
-		commitStats: [],
-		prStats: [],
-		issueStats: [],
-		totalCommits: 0,
-		totalPRs: 0,
-		totalIssues: 0,
-		totalLinesAdded: 0,
-		totalLinesDeleted: 0,
-	},
+	...EMPTY_ORG,
 	timeframe: 'ytd',
 	metricType: 'commits',
-	isLoading: {
-		info: false,
-		members: false,
-		teams: false,
-		repos: false,
-		commits: false,
-		prs: false,
-		issues: false,
-	},
-	error: null,
-	notFound: false,
-	suggestions: [],
-	cacheAge: null,
-	isUsingCachedData: false,
+	isLoading: IDLE,
 
 	setOrg: (org) => {
-		// Check for offline cached data first
-		const offlineCache = loadFromOfflineCache<OrgData>(org)
+		const offline = loadFromOfflineCache(org)
+		const activity =
+			offline?.data.activity && offline.data.timeframe === get().timeframe
+				? offline.data.activity
+				: null
 
 		set({
+			...EMPTY_ORG,
 			currentOrg: org,
-			orgData: offlineCache?.data ?? {
-				info: null,
-				members: [],
-				teams: [],
-				repos: [],
-				commitStats: [],
-				prStats: [],
-				issueStats: [],
-				totalCommits: 0,
-				totalPRs: 0,
-				totalIssues: 0,
-				totalLinesAdded: 0,
-				totalLinesDeleted: 0,
-			},
-			error: null,
-			notFound: false,
-			suggestions: [],
-			cacheAge: offlineCache ? formatCacheAge(offlineCache.timestamp) : null,
-			isUsingCachedData: !!offlineCache,
+			overview: offline?.data.overview ?? null,
+			commits: activity?.commits ?? null,
+			prs: activity?.prs ?? null,
+			issues: activity?.issues ?? null,
+			cacheAge: offline ? formatCacheAge(offline.timestamp) : null,
+			isUsingCachedData: !!offline,
+			isLoading: IDLE,
 		})
 	},
 
 	setTimeframe: (timeframe) => {
 		set({ timeframe })
-		// Refetch stats with new timeframe
-		const { fetchCommitStats, fetchPRStats, fetchIssueStats } = get()
-		Promise.all([fetchCommitStats(), fetchPRStats(), fetchIssueStats()])
+		void get().fetchActivity()
 	},
 
 	setMetricType: (metricType) => {
 		set({ metricType })
 	},
 
-	fetchOrgInfo: async () => {
-		const { currentOrg } = get()
-		if (!currentOrg) return
+	fetchOverview: async () => {
+		const org = get().currentOrg
+		if (!org) return
+
+		const cached = memoryGet<OrgOverview>(`overview:${org}`)
+		if (cached) {
+			set((s) => ({
+				overview: cached,
+				isLoading: { ...s.isLoading, overview: false },
+				error: null,
+				notFound: false,
+				suggestions: [],
+			}))
+			return
+		}
 
 		set((s) => ({
-			isLoading: { ...s.isLoading, info: true },
+			isLoading: { ...s.isLoading, overview: true },
 			error: null,
 			notFound: false,
 			suggestions: [],
 		}))
 
-		const token = await useAuthStore.getState().getToken()
-		if (!token) {
+		try {
+			const gh = await getClient()
+			const overview = await gh.getOrgOverview(org)
+			memorySet(`overview:${org}`, overview)
+			if (get().currentOrg !== org) return
+			set((s) => ({ overview, isLoading: { ...s.isLoading, overview: false } }))
+		} catch (err) {
+			if (get().currentOrg !== org) return
+			if (err instanceof GitHubError && err.status === 404) {
+				const suggestions = await getClient()
+					.then((gh) => gh.searchOrgs(org))
+					.catch((): OrgSuggestion[] => [])
+				if (get().currentOrg !== org) return
+				set((s) => ({
+					isLoading: { ...s.isLoading, overview: false },
+					error: `Organization "${org}" not found`,
+					notFound: true,
+					suggestions,
+				}))
+				return
+			}
 			set((s) => ({
-				isLoading: { ...s.isLoading, info: false },
-				error: 'Not authenticated',
+				isLoading: { ...s.isLoading, overview: false },
+				error: describeError(err, 'Failed to fetch org info'),
 			}))
+		}
+	},
+
+	fetchActivity: async () => {
+		const { currentOrg: org, timeframe } = get()
+		if (!org) return
+
+		const key = `activity:${org}:${timeframe}`
+		const cached = memoryGet<Activity>(key)
+		if (cached) {
+			set({
+				...cached,
+				activityError: null,
+				isLoading: { ...get().isLoading, commits: false, prs: false, issues: false },
+			})
 			return
 		}
 
+		set((s) => ({ isLoading: { ...s.isLoading, commits: true, prs: true, issues: true } }))
+
 		try {
-			const info = await cachedGitHubFetch<Organization>(
-				`org:${currentOrg}`,
-				async () => {
-					const response = await fetch(`https://api.github.com/orgs/${currentOrg}`, {
-						headers: {
-							Authorization: `Bearer ${token}`,
-							Accept: 'application/vnd.github+json',
-						},
-					})
+			const gh = await getClient()
+			const since = getDateSince(timeframe)
+			const [commits, prs, issues] = await Promise.allSettled([
+				gh.getCommitActivity(org, { since }),
+				gh.getPullRequestActivity(org, { since }),
+				gh.getIssueActivity(org, { since }),
+			])
 
-					if (response.status === 404) {
-						throw new Error('NOT_FOUND')
-					}
+			// Ignore results for an org or timeframe the user has already left
+			if (get().currentOrg !== org || get().timeframe !== timeframe) return
 
-					if (!response.ok) {
-						throw new Error(`GitHub API error: ${response.status}`)
-					}
+			if (
+				commits.status === 'fulfilled' &&
+				prs.status === 'fulfilled' &&
+				issues.status === 'fulfilled'
+			) {
+				memorySet(key, { commits: commits.value, prs: prs.value, issues: issues.value })
+			}
 
-					return response.json() as Promise<Organization>
-				}
-			)
-
+			const failed = [commits, prs, issues].find((r) => r.status === 'rejected')
 			set((s) => ({
-				orgData: { ...s.orgData, info },
-				isLoading: { ...s.isLoading, info: false },
+				commits: commits.status === 'fulfilled' ? commits.value : null,
+				prs: prs.status === 'fulfilled' ? prs.value : null,
+				issues: issues.status === 'fulfilled' ? issues.value : null,
+				isLoading: { ...s.isLoading, commits: false, prs: false, issues: false },
+				activityError: failed ? describeError(failed.reason, 'Failed to fetch activity') : null,
 			}))
 		} catch (err) {
-			if (err instanceof Error && err.message === 'NOT_FOUND') {
-				// Search for similar organizations
-				try {
-					const searchResponse = await fetch(
-						`https://api.github.com/search/users?q=${encodeURIComponent(currentOrg)}+type:org&per_page=5`,
-						{
-							headers: {
-								Authorization: `Bearer ${token}`,
-								Accept: 'application/vnd.github+json',
-							},
-						}
-					)
-
-					let suggestions: OrgSuggestion[] = []
-					if (searchResponse.ok) {
-						const searchData = await searchResponse.json()
-						suggestions = (searchData.items || []).map(
-							(item: { login: string; avatar_url: string; description?: string }) => ({
-								login: item.login,
-								avatar_url: item.avatar_url,
-								description: item.description || null,
-							})
-						)
-					}
-
-					set((s) => ({
-						isLoading: { ...s.isLoading, info: false },
-						error: `Organization "${currentOrg}" not found`,
-						notFound: true,
-						suggestions,
-					}))
-				} catch {
-					set((s) => ({
-						isLoading: { ...s.isLoading, info: false },
-						error: `Organization "${currentOrg}" not found`,
-						notFound: true,
-					}))
-				}
-			} else {
-				set((s) => ({
-					isLoading: { ...s.isLoading, info: false },
-					error: err instanceof Error ? err.message : 'Failed to fetch org info',
-				}))
-			}
-		}
-	},
-
-	fetchMembers: async () => {
-		const { currentOrg } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, members: true } }))
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			const members = await cachedGitHubFetch<Member[]>(
-				`members:${currentOrg}`,
-				() => fetchAllPages<Member>(`/orgs/${currentOrg}/members`, token, {}, 10)
-			)
-
+			if (get().currentOrg !== org || get().timeframe !== timeframe) return
 			set((s) => ({
-				orgData: { ...s.orgData, members },
-				isLoading: { ...s.isLoading, members: false },
+				isLoading: { ...s.isLoading, commits: false, prs: false, issues: false },
+				activityError: describeError(err, 'Failed to fetch activity'),
 			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, members: false } }))
-		}
-	},
-
-	fetchTeams: async () => {
-		const { currentOrg } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, teams: true } }))
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			const teams = await cachedGitHubFetch<Team[]>(
-				`teams:${currentOrg}`,
-				() => fetchAllPages<Team>(`/orgs/${currentOrg}/teams`, token, {}, 10)
-			)
-
-			set((s) => ({
-				orgData: { ...s.orgData, teams },
-				isLoading: { ...s.isLoading, teams: false },
-			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, teams: false } }))
-		}
-	},
-
-	fetchRepos: async () => {
-		const { currentOrg } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, repos: true } }))
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			const repos = await cachedGitHubFetch<Repository[]>(
-				`repos:${currentOrg}`,
-				() =>
-					fetchAllPages<Repository>(
-						`/orgs/${currentOrg}/repos`,
-						token,
-						{ type: 'all', sort: 'pushed' },
-						10
-					)
-			)
-
-			set((s) => ({
-				orgData: { ...s.orgData, repos },
-				isLoading: { ...s.isLoading, repos: false },
-			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, repos: false } }))
-		}
-	},
-
-	fetchCommitStats: async () => {
-		const { currentOrg, orgData, timeframe } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, commits: true } }))
-
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			// Get repos first if not loaded
-			let repos = orgData.repos
-			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
-				)
-				set((s) => ({ orgData: { ...s.orgData, repos } }))
-			}
-
-			const commitsByAuthor = new Map<string, number>()
-			const since = getDateSince(timeframe)
-
-			// Process repos in parallel batches using core's batchProcess
-			await batchProcess(
-				repos,
-				async (repo) => {
-					try {
-						const commits = await fetchAllPages<{ author?: { login: string } }>(
-							`/repos/${repo.full_name}/commits`,
-							token,
-							{ since },
-							3 // Limit to 3 pages = 300 commits per repo
-						)
-						for (const commit of commits) {
-							if (commit.author?.login) {
-								const current = commitsByAuthor.get(commit.author.login) ?? 0
-								commitsByAuthor.set(commit.author.login, current + 1)
-							}
-						}
-					} catch {
-						// Skip repos we can't access
-					}
-				},
-				{ concurrency: 10 }
-			)
-
-			const allStats = Array.from(commitsByAuthor.entries())
-				.map(([author, count]) => ({ author, count }))
-				.sort((a, b) => b.count - a.count)
-
-			// Calculate total from ALL contributors
-			const totalCommits = allStats.reduce((sum, s) => sum + s.count, 0)
-
-			// Keep top 10 for display
-			const commitStats: CommitStats[] = allStats.slice(0, 10)
-
-			set((s) => ({
-				orgData: { ...s.orgData, commitStats, totalCommits },
-				isLoading: { ...s.isLoading, commits: false },
-			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, commits: false } }))
-		}
-	},
-
-	fetchPRStats: async () => {
-		const { currentOrg, orgData, timeframe } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, prs: true } }))
-
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			let repos = orgData.repos
-			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
-				)
-				set((s) => ({ orgData: { ...s.orgData, repos } }))
-			}
-
-			const prsByAuthor = new Map<string, { count: number; merged: number }>()
-			let totalPRs = 0
-
-			const since = getDateSince(timeframe)
-			const sinceDate = new Date(since)
-
-			// Process repos in parallel batches
-			await batchProcess(
-				repos,
-				async (repo) => {
-					try {
-						const prs = await fetchAllPages<{
-							user?: { login: string }
-							merged_at: string | null
-							created_at: string
-						}>(
-							`/repos/${repo.full_name}/pulls`,
-							token,
-							{ state: 'all', sort: 'created', direction: 'desc' },
-							3
-						)
-
-						for (const pr of prs) {
-							if (new Date(pr.created_at) < sinceDate) continue
-							totalPRs++
-							if (pr.user?.login) {
-								const current = prsByAuthor.get(pr.user.login) ?? { count: 0, merged: 0 }
-								current.count++
-								if (pr.merged_at) current.merged++
-								prsByAuthor.set(pr.user.login, current)
-							}
-						}
-					} catch {
-						// Skip repos we can't access
-					}
-				},
-				{ concurrency: 10 }
-			)
-
-			const prStats: PRStats[] = Array.from(prsByAuthor.entries())
-				.map(([author, stats]) => ({ author, count: stats.count, merged: stats.merged }))
-				.sort((a, b) => b.count - a.count)
-				.slice(0, 10)
-
-			set((s) => ({
-				orgData: { ...s.orgData, prStats, totalPRs },
-				isLoading: { ...s.isLoading, prs: false },
-			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, prs: false } }))
-		}
-	},
-
-	fetchIssueStats: async () => {
-		const { currentOrg, orgData, timeframe } = get()
-		if (!currentOrg) return
-
-		set((s) => ({ isLoading: { ...s.isLoading, issues: true } }))
-
-		try {
-			const token = await useAuthStore.getState().getToken()
-			if (!token) throw new Error('Not authenticated')
-
-			let repos = orgData.repos
-			if (repos.length === 0) {
-				repos = await cachedGitHubFetch<Repository[]>(
-					`repos:${currentOrg}`,
-					() =>
-						fetchAllPages<Repository>(
-							`/orgs/${currentOrg}/repos`,
-							token,
-							{ type: 'all', sort: 'pushed' },
-							10
-						)
-				)
-				set((s) => ({ orgData: { ...s.orgData, repos } }))
-			}
-
-			const issuesByAuthor = new Map<string, { opened: number; closed: number }>()
-			let totalIssues = 0
-
-			const since = getDateSince(timeframe)
-			const sinceDate = new Date(since)
-
-			// Process repos in parallel batches
-			await batchProcess(
-				repos,
-				async (repo) => {
-					try {
-						const issues = await fetchAllPages<{
-							user?: { login: string }
-							state: string
-							created_at: string
-							pull_request?: unknown
-						}>(
-							`/repos/${repo.full_name}/issues`,
-							token,
-							{ state: 'all', since },
-							3
-						)
-
-						for (const issue of issues) {
-							// Skip pull requests (they show up in issues endpoint too)
-							if (issue.pull_request) continue
-							if (new Date(issue.created_at) < sinceDate) continue
-							totalIssues++
-							if (issue.user?.login) {
-								const current = issuesByAuthor.get(issue.user.login) ?? {
-									opened: 0,
-									closed: 0,
-								}
-								current.opened++
-								if (issue.state === 'closed') current.closed++
-								issuesByAuthor.set(issue.user.login, current)
-							}
-						}
-					} catch {
-						// Skip repos we can't access
-					}
-				},
-				{ concurrency: 10 }
-			)
-
-			const issueStats: IssueStats[] = Array.from(issuesByAuthor.entries())
-				.map(([author, stats]) => ({ author, opened: stats.opened, closed: stats.closed }))
-				.sort((a, b) => b.opened - a.opened)
-				.slice(0, 10)
-
-			set((s) => ({
-				orgData: { ...s.orgData, issueStats, totalIssues },
-				isLoading: { ...s.isLoading, issues: false },
-			}))
-		} catch {
-			set((s) => ({ isLoading: { ...s.isLoading, issues: false } }))
 		}
 	},
 
 	fetchAll: async () => {
-		const { currentOrg, fetchOrgInfo, fetchMembers, fetchTeams, fetchRepos } = get()
-		if (!currentOrg) return
+		const org = get().currentOrg
+		if (!org) return
 
-		// Clear cached data flag when fetching fresh data
-		set({ isUsingCachedData: false, cacheAge: null })
+		set({ isUsingCachedData: false, cacheAge: null, isLoading: BUSY })
+		await Promise.all([get().fetchOverview(), get().fetchActivity()])
 
-		// Phase 1: Fetch org info, members, teams, and repos in parallel
-		// Repos are needed by all stats functions, so fetch them first
-		await Promise.all([fetchOrgInfo(), fetchMembers(), fetchTeams(), fetchRepos()])
-
-		// Phase 2: Now fetch all stats in parallel (they'll use cached repos)
-		const { fetchCommitStats, fetchPRStats, fetchIssueStats } = get()
-		await Promise.all([fetchCommitStats(), fetchPRStats(), fetchIssueStats()])
-
-		// Save to offline cache after successful fetch
-		const { orgData, notFound, error } = get()
-		if (!notFound && !error && orgData.info) {
-			saveToOfflineCache(currentOrg, orgData)
+		const { currentOrg, overview, commits, prs, issues, timeframe, error, notFound } = get()
+		if (currentOrg === org && overview && !error && !notFound) {
+			saveToOfflineCache(org, {
+				overview,
+				timeframe,
+				activity: commits && prs && issues ? { commits, prs, issues } : null,
+			})
 		}
 	},
 
-	// Clear cache for current org (useful for manual refresh)
 	clearCache: () => {
-		cache.clear()
+		memoryCache.clear()
 	},
 }))

@@ -101,11 +101,7 @@ export interface ModalHeaderProps {
 
 function ModalHeader({ children, className }: ModalHeaderProps) {
 	return (
-		<div
-			className={cn('px-6 py-4 border-b border-[var(--border)]', className)}
-		>
-			{children}
-		</div>
+		<div className={cn('px-6 py-4 border-b border-[var(--border)]', className)}>{children}</div>
 	)
 }
 
@@ -116,12 +112,7 @@ export interface ModalTitleProps {
 
 function ModalTitle({ children, className }: ModalTitleProps) {
 	return (
-		<Dialog.Title
-			className={cn(
-				'text-lg font-semibold text-[var(--foreground)]',
-				className
-			)}
-		>
+		<Dialog.Title className={cn('text-lg font-semibold text-[var(--foreground)]', className)}>
 			{children}
 		</Dialog.Title>
 	)
@@ -134,9 +125,7 @@ export interface ModalDescriptionProps {
 
 function ModalDescription({ children, className }: ModalDescriptionProps) {
 	return (
-		<Dialog.Description
-			className={cn('text-sm text-[var(--muted)] mt-1', className)}
-		>
+		<Dialog.Description className={cn('text-sm text-[var(--muted)] mt-1', className)}>
 			{children}
 		</Dialog.Description>
 	)
@@ -150,10 +139,7 @@ export interface ModalFooterProps {
 function ModalFooter({ children, className }: ModalFooterProps) {
 	return (
 		<div
-			className={cn(
-				'px-6 py-4 border-t border-[var(--border)] flex justify-end gap-3',
-				className
-			)}
+			className={cn('px-6 py-4 border-t border-[var(--border)] flex justify-end gap-3', className)}
 		>
 			{children}
 		</div>

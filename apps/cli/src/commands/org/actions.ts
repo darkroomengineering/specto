@@ -1,7 +1,8 @@
+import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
-import { getActionsSettings, getOrgRunners, getOrgSecrets, type OutputFormat } from '@specto/core'
+import { github } from '../../lib/github'
 import { withSpinner } from '../../lib/ui/spinner'
-import { printTable, printKeyValue, printSection, printWarning } from '../../lib/ui/table'
+import { printKeyValue, printSection, printTable, printWarning } from '../../lib/ui/table'
 
 interface ActionsOptions {
 	org: string
@@ -15,8 +16,8 @@ export async function runOrgActions(options: ActionsOptions): Promise<void> {
 
 	// Fetch settings
 	try {
-		const settings = await withSpinner(`Fetching Actions settings...`, () =>
-			getActionsSettings(org)
+		const settings = await withSpinner(`Fetching Actions settings...`, async () =>
+			(await github()).getActionsSettings(org)
 		)
 
 		if (output === 'json') {
@@ -24,7 +25,7 @@ export async function runOrgActions(options: ActionsOptions): Promise<void> {
 
 			if (showRunners) {
 				try {
-					data.runners = await getOrgRunners(org)
+					data.runners = await (await github()).getOrgRunners(org)
 				} catch {
 					data.runners = { error: 'No access' }
 				}
@@ -32,7 +33,7 @@ export async function runOrgActions(options: ActionsOptions): Promise<void> {
 
 			if (showSecrets) {
 				try {
-					data.secrets = await getOrgSecrets(org)
+					data.secrets = await (await github()).getOrgSecrets(org)
 				} catch {
 					data.secrets = { error: 'No access' }
 				}
@@ -63,8 +64,8 @@ export async function runOrgActions(options: ActionsOptions): Promise<void> {
 	// Fetch runners if requested
 	if (showRunners) {
 		try {
-			const runnersData = await withSpinner(`Fetching self-hosted runners...`, () =>
-				getOrgRunners(org)
+			const runnersData = await withSpinner(`Fetching self-hosted runners...`, async () =>
+				(await github()).getOrgRunners(org)
 			)
 
 			if (runnersData.runners.length === 0) {
@@ -110,8 +111,8 @@ export async function runOrgActions(options: ActionsOptions): Promise<void> {
 	// Fetch secrets if requested
 	if (showSecrets) {
 		try {
-			const secretsData = await withSpinner(`Fetching organization secrets...`, () =>
-				getOrgSecrets(org)
+			const secretsData = await withSpinner(`Fetching organization secrets...`, async () =>
+				(await github()).getOrgSecrets(org)
 			)
 
 			if (secretsData.secrets.length === 0) {

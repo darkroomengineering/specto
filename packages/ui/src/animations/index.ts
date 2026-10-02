@@ -1,4 +1,4 @@
-import type { Variants, Transition } from 'motion/react'
+import type { Transition, Variants } from 'motion/react'
 
 // =============================================================================
 // Fade Variants

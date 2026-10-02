@@ -2,8 +2,8 @@
 
 import Lenis from 'lenis'
 import { useEffect } from 'react'
-import { Header } from '../header'
 import { Footer } from '../footer'
+import { Header } from '../header'
 
 interface WrapperProps {
 	children: React.ReactNode
@@ -15,7 +15,7 @@ export function Wrapper({ children, showHeader = true, showFooter = true }: Wrap
 	useEffect(() => {
 		const lenis = new Lenis({
 			duration: 1.2,
-			easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+			easing: (t) => Math.min(1, 1.001 - 2 ** (-10 * t)),
 			orientation: 'vertical',
 			smoothWheel: true,
 		})

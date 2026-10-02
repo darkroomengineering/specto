@@ -1,11 +1,10 @@
+import { getAuthStatus, isGhCliAvailable } from '@specto/core/node'
 import { Command } from 'commander'
 import pc from 'picocolors'
-import { getAuthStatus, isGhCliAvailable } from '@specto/core'
-import { printKeyValue, printSuccess, printWarning, printError } from '../../lib/ui/table'
+import { printError, printKeyValue, printSuccess, printWarning } from '../../lib/ui/table'
 import { wrapCommand } from '../../lib/utils/errors'
 
-export const configCommand = new Command('config')
-	.description('CLI configuration and status')
+export const configCommand = new Command('config').description('CLI configuration and status')
 
 configCommand
 	.command('auth')

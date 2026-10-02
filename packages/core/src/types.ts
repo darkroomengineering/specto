@@ -57,77 +57,6 @@ export interface Member {
 	site_admin: boolean
 }
 
-export interface OrgMembership {
-	state: string
-	role: 'admin' | 'member'
-	user: Member
-}
-
-export interface Repository {
-	id: number
-	name: string
-	full_name: string
-	private: boolean
-	html_url: string
-	description: string | null
-	fork: boolean
-	created_at: string
-	updated_at: string
-	pushed_at: string
-	size: number
-	stargazers_count: number
-	watchers_count: number
-	language: string | null
-	forks_count: number
-	archived: boolean
-	disabled: boolean
-	open_issues_count: number
-	default_branch: string
-	visibility: string
-}
-
-export interface Commit {
-	sha: string
-	commit: {
-		author: {
-			name: string
-			email: string
-			date: string
-		}
-		committer: {
-			name: string
-			email: string
-			date: string
-		}
-		message: string
-	}
-	author: {
-		login: string
-		id: number
-		avatar_url: string
-		type: string
-	} | null
-	committer: {
-		login: string
-		id: number
-		avatar_url: string
-		type: string
-	} | null
-}
-
-export interface Team {
-	id: number
-	name: string
-	slug: string
-	description: string | null
-	privacy: string
-	permission: string
-	members_count: number
-	repos_count: number
-	html_url: string
-	parent: Team | null
-}
-
 export interface Webhook {
 	id: number
 	name: string
@@ -140,19 +69,6 @@ export interface Webhook {
 	}
 	updated_at: string
 	created_at: string
-}
-
-export interface AuditLogEntry {
-	'@timestamp': number
-	action: string
-	actor: string
-	actor_location?: {
-		country_code: string
-	}
-	created_at: number
-	org: string
-	repo?: string
-	user?: string
 }
 
 export interface ActionsSettings {
@@ -178,22 +94,77 @@ export interface OrgSecret {
 	selected_repositories_url?: string
 }
 
-export interface CommitStats {
+export interface AuthorCount {
 	author: string
 	count: number
 }
 
-export interface PaginationOptions {
-	perPage?: number
-	maxPages?: number
+export interface PullRequestAuthorCount extends AuthorCount {
+	merged: number
 }
 
-export interface CommitStatsOptions {
-	org: string
-	since: string
-	until: string
-	membersOnly: boolean
-	includeBots: boolean
+export interface IssueAuthorCount {
+	author: string
+	opened: number
+	closed: number
+}
+
+export interface CommitActivity {
+	/** Exact number of commits on default branches in the range */
+	total: number
+	/** Commits counted in byAuthor (after bot/author filters and page caps) */
+	attributed: number
+	byAuthor: AuthorCount[]
+	/** Repos pushed to since the start of the range */
+	repositories: number
+	/** False when a repo had more commits than the per-repo page cap */
+	complete: boolean
+}
+
+export interface PullRequestActivity {
+	total: number
+	/** Items inspected for byAuthor (search caps at 1,000) */
+	sampled: number
+	byAuthor: PullRequestAuthorCount[]
+	complete: boolean
+}
+
+export interface IssueActivity {
+	total: number
+	sampled: number
+	byAuthor: IssueAuthorCount[]
+	complete: boolean
+}
+
+export interface OrgTeam {
+	id: string
+	slug: string
+	name: string
+	description: string | null
+	privacy: 'SECRET' | 'VISIBLE'
+	url: string
+	memberCount: number
+	repositoryCount: number
+	parentName: string | null
+}
+
+export interface OrgOverview {
+	login: string
+	name: string | null
+	description: string | null
+	avatarUrl: string
+	url: string
+	websiteUrl: string | null
+	location: string | null
+	createdAt: string
+	repositoryCount: number
+	memberCount: number
+	teams: OrgTeam[]
+}
+
+export interface OrgSuggestion {
+	login: string
+	avatarUrl: string
 }
 
 export type OutputFormat = 'table' | 'json' | 'csv'

@@ -63,14 +63,8 @@ export function Skeleton({
 /**
  * Skeleton.Text - Pre-configured text line skeleton
  */
-function SkeletonText({
-	width = '100%',
-	className,
-	...props
-}: Omit<SkeletonProps, 'variant'>) {
-	return (
-		<Skeleton variant="text" width={width} className={className} {...props} />
-	)
+function SkeletonText({ width = '100%', className, ...props }: Omit<SkeletonProps, 'variant'>) {
+	return <Skeleton variant="text" width={width} className={className} {...props} />
 }
 
 /**
@@ -81,15 +75,7 @@ function SkeletonCircle({
 	className,
 	...props
 }: Omit<SkeletonProps, 'variant' | 'width' | 'height'> & { size?: number }) {
-	return (
-		<Skeleton
-			variant="circular"
-			width={size}
-			height={size}
-			className={className}
-			{...props}
-		/>
-	)
+	return <Skeleton variant="circular" width={size} height={size} className={className} {...props} />
 }
 
 /**

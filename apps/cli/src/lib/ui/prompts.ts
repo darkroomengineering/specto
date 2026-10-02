@@ -1,6 +1,7 @@
 import * as p from '@clack/prompts'
+import { getDefaultDateRange, type OutputFormat } from '@specto/core'
 import pc from 'picocolors'
-import { getUserOrgs, getDefaultDateRange, type OutputFormat } from '@specto/core'
+import { github } from '../github'
 
 export async function selectOrganization(defaultOrg?: string): Promise<string> {
 	// If default provided and user confirms, use it
@@ -23,7 +24,7 @@ export async function selectOrganization(defaultOrg?: string): Promise<string> {
 	// Try to fetch user's orgs
 	let orgs: Array<{ value: string; label: string }> = []
 	try {
-		const userOrgs = await getUserOrgs()
+		const userOrgs = await (await github()).listUserOrgs()
 		orgs = userOrgs.map((org) => ({
 			value: org.login,
 			label: org.login,
@@ -35,10 +36,7 @@ export async function selectOrganization(defaultOrg?: string): Promise<string> {
 	if (orgs.length > 0) {
 		const selected = await p.select({
 			message: 'Select an organization',
-			options: [
-				...orgs,
-				{ value: '__other__', label: pc.dim('Enter manually...') },
-			],
+			options: [...orgs, { value: '__other__', label: pc.dim('Enter manually...') }],
 		})
 
 		if (p.isCancel(selected)) {
@@ -56,8 +54,8 @@ export async function selectOrganization(defaultOrg?: string): Promise<string> {
 		message: 'Enter organization name',
 		placeholder: 'my-organization',
 		validate: (value) => {
-			if (!value.trim()) return 'Organization name is required'
-			if (!/^[a-zA-Z0-9-]+$/.test(value)) return 'Invalid organization name'
+			if (!value?.trim()) return 'Organization name is required'
+			if (!/^[a-zA-Z0-9-]+$/.test(value.trim())) return 'Invalid organization name'
 			return undefined
 		},
 	})
@@ -127,7 +125,7 @@ export async function selectDateRange(): Promise<{ since: string; until: string 
 				message: 'Start date (YYYY-MM-DD)',
 				placeholder: defaults.since.split('T')[0],
 				validate: (value) => {
-					if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Use YYYY-MM-DD format'
+					if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '')) return 'Use YYYY-MM-DD format'
 					return undefined
 				},
 			})
@@ -141,7 +139,7 @@ export async function selectDateRange(): Promise<{ since: string; until: string 
 				message: 'End date (YYYY-MM-DD)',
 				placeholder: defaults.until.split('T')[0],
 				validate: (value) => {
-					if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Use YYYY-MM-DD format'
+					if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '')) return 'Use YYYY-MM-DD format'
 					return undefined
 				},
 			})

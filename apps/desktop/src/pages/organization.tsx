@@ -1,15 +1,15 @@
-import { useEffect, useState, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'motion/react'
-import { Card, Stat, Table, Badge, Button, Select, ProGate, ProBadge } from '@specto/ui'
-import { toast } from 'sonner'
+import { Badge, Button, Card, ProGate, Select, Stat, Table } from '@specto/ui'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeTextFile } from '@tauri-apps/plugin-fs'
 import { open } from '@tauri-apps/plugin-shell'
-import { useGitHubStore, type Timeframe, type MetricType } from '../stores/github'
-import { useProFeature } from '../stores/license'
-import { Spinner } from '../components/spinner'
+import { AnimatePresence, motion } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { OrganizationSkeleton } from '../components/skeletons/organization-skeleton'
+import { Spinner } from '../components/spinner'
+import { type MetricType, type Timeframe, useGitHubStore } from '../stores/github'
+import { useProFeature } from '../stores/license'
 
 const metricOptions = [
 	{ value: 'commits', label: 'Commits' },
@@ -26,7 +26,10 @@ export function Organization() {
 	const navigate = useNavigate()
 	const {
 		currentOrg,
-		orgData,
+		overview,
+		commits,
+		prs,
+		issues,
 		isLoading,
 		error,
 		notFound,
@@ -51,7 +54,7 @@ export function Organization() {
 	]
 
 	// Determine if primary data is still loading (for coordinated skeleton)
-	const isPrimaryLoading = isLoading.info && !orgData.info
+	const isPrimaryLoading = isLoading.overview && !overview
 
 	useEffect(() => {
 		if (orgName && orgName !== currentOrg) {
@@ -65,7 +68,30 @@ export function Organization() {
 		}
 	}, [currentOrg, fetchAll])
 
-	const { info, members, teams, commitStats, prStats, issueStats, repos, totalCommits, totalPRs, totalIssues } = orgData
+	const teams = overview?.teams ?? []
+	// Full author lists live in the store; tables show the top 10
+	const commitStats = commits?.byAuthor.slice(0, 10) ?? []
+	const prStats = prs?.byAuthor.slice(0, 10) ?? []
+	const issueStats = issues?.byAuthor.slice(0, 10) ?? []
+	const totalCommits = commits?.total ?? 0
+	const totalPRs = prs?.total ?? 0
+	const totalIssues = issues?.total ?? 0
+	const contributorCount = commits?.byAuthor.length ?? 0
+	const isActivityLoading = isLoading.commits || isLoading.prs || isLoading.issues
+
+	// Say so when the author breakdown covers only part of the data
+	const truncationNote =
+		metricType === 'commits'
+			? commits && !commits.complete
+				? 'Some repositories have more commits than were fetched, so author counts may be low.'
+				: null
+			: metricType === 'prs'
+				? prs && prs.sampled < prs.total
+					? `Author breakdown is from the latest ${prs.sampled.toLocaleString()} of ${prs.total.toLocaleString()} pull requests.`
+					: null
+				: issues && issues.sampled < issues.total
+					? `Author breakdown is from the latest ${issues.sampled.toLocaleString()} of ${issues.total.toLocaleString()} issues.`
+					: null
 
 	const handleExport = async (format: 'csv' | 'json') => {
 		if (!canExport || !orgName) {
@@ -77,18 +103,17 @@ export function Organization() {
 		setShowExportMenu(false)
 
 		try {
-			const period = getTimeframeLabel(timeframe)
-			const exportContent = format === 'json'
-				? generateJSONExport()
-				: generateCSVExport()
+			const _period = getTimeframeLabel(timeframe)
+			const exportContent = format === 'json' ? generateJSONExport() : generateCSVExport()
 
 			// Show save dialog
 			const defaultFilename = `specto-${orgName}-${timeframe}.${format}`
 			const filePath = await save({
 				defaultPath: defaultFilename,
-				filters: format === 'csv'
-					? [{ name: 'CSV', extensions: ['csv'] }]
-					: [{ name: 'JSON', extensions: ['json'] }],
+				filters:
+					format === 'csv'
+						? [{ name: 'CSV', extensions: ['csv'] }]
+						: [{ name: 'JSON', extensions: ['json'] }],
 			})
 
 			if (filePath) {
@@ -126,9 +151,9 @@ export function Organization() {
 		const data = {
 			organization: {
 				name: orgName,
-				description: info?.description || null,
-				publicRepos: info?.public_repos || repos.length,
-				members: members.length,
+				description: overview?.description || null,
+				repositories: overview?.repositoryCount ?? 0,
+				members: overview?.memberCount ?? 0,
 				teams: teams.length,
 			},
 			period,
@@ -137,26 +162,26 @@ export function Organization() {
 				totalCommits,
 				totalPullRequests: totalPRs,
 				totalIssues,
-				activeContributors: commitStats.length,
+				activeContributors: contributorCount,
 			},
-			topContributorsByCommits: commitStats.map(s => ({
+			topContributorsByCommits: commitStats.map((s) => ({
 				author: s.author,
 				commits: s.count,
 			})),
-			topContributorsByPRs: prStats.map(s => ({
+			topContributorsByPRs: prStats.map((s) => ({
 				author: s.author,
 				pullRequests: s.count,
 				merged: s.merged,
 			})),
-			topContributorsByIssues: issueStats.map(s => ({
+			topContributorsByIssues: issueStats.map((s) => ({
 				author: s.author,
 				opened: s.opened,
 				closed: s.closed,
 			})),
-			teams: teams.slice(0, 10).map(t => ({
+			teams: teams.slice(0, 10).map((t) => ({
 				name: t.name,
 				privacy: t.privacy,
-				membersCount: t.members_count,
+				membersCount: t.memberCount,
 			})),
 		}
 		return JSON.stringify(data, null, 2)
@@ -178,9 +203,9 @@ export function Organization() {
 		lines.push(`Total Commits,${totalCommits}`)
 		lines.push(`Total Pull Requests,${totalPRs}`)
 		lines.push(`Total Issues,${totalIssues}`)
-		lines.push(`Active Contributors,${commitStats.length}`)
-		lines.push(`Repositories,${repos.length}`)
-		lines.push(`Members,${members.length}`)
+		lines.push(`Active Contributors,${contributorCount}`)
+		lines.push(`Repositories,${overview?.repositoryCount ?? 0}`)
+		lines.push(`Members,${overview?.memberCount ?? 0}`)
 		lines.push(`Teams,${teams.length}`)
 		lines.push('')
 
@@ -212,26 +237,32 @@ export function Organization() {
 
 	const getTimeframeLabel = (tf: Timeframe) => {
 		switch (tf) {
-			case '7d': return 'Last 7 days'
-			case '30d': return 'Last 30 days'
-			case '90d': return 'Last 90 days'
-			case 'ytd': return 'Year to date'
-			case 'all': return 'All time'
+			case '7d':
+				return 'Last 7 days'
+			case '30d':
+				return 'Last 30 days'
+			case '90d':
+				return 'Last 90 days'
+			case 'ytd':
+				return 'Year to date'
+			case 'all':
+				return 'All time'
 		}
 	}
 
 	const renderContributorTable = () => {
-		const isLoadingData = metricType === 'commits' ? isLoading.commits
-			: metricType === 'prs' ? isLoading.prs
-			: isLoading.issues
+		const isLoadingData = isLoading[metricType === 'reviews' ? 'issues' : metricType]
 
-		const data = metricType === 'commits' ? commitStats
-			: metricType === 'prs' ? prStats
-			: issueStats
+		const data =
+			metricType === 'commits' ? commitStats : metricType === 'prs' ? prStats : issueStats
 
-		const total = metricType === 'commits' ? totalCommits
-			: metricType === 'prs' ? totalPRs
-			: totalIssues
+		// Commit shares use attributed commits: the rest have no GitHub user or are from bots
+		const total =
+			metricType === 'commits'
+				? (commits?.attributed ?? 0)
+				: metricType === 'prs'
+					? totalPRs
+					: totalIssues
 
 		if (isLoadingData && data.length === 0) {
 			return (
@@ -260,17 +291,19 @@ export function Organization() {
 					<Table.Header>
 						<Table.Row>
 							<Table.Head scope="col">Author</Table.Head>
-							<Table.Head scope="col" className="text-right">Commits</Table.Head>
-							<Table.Head scope="col" className="text-right">Share</Table.Head>
+							<Table.Head scope="col" className="text-right">
+								Commits
+							</Table.Head>
+							<Table.Head scope="col" className="text-right">
+								Share
+							</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
 						{commitStats.map((stat) => (
 							<Table.Row key={stat.author}>
 								<Table.Cell className="font-medium">{stat.author}</Table.Cell>
-								<Table.Cell className="text-right text-[var(--accent)]">
-									{stat.count}
-								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--accent)]">{stat.count}</Table.Cell>
 								<Table.Cell className="text-right text-[var(--muted)]">
 									{total > 0 ? `${((stat.count / total) * 100).toFixed(1)}%` : '—'}
 								</Table.Cell>
@@ -279,9 +312,7 @@ export function Organization() {
 						{hasOther && (
 							<Table.Row>
 								<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
-								<Table.Cell className="text-right text-[var(--muted)]">
-									{otherCommits}
-								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">{otherCommits}</Table.Cell>
 								<Table.Cell className="text-right text-[var(--muted)]">
 									{total > 0 ? `${((otherCommits / total) * 100).toFixed(1)}%` : '—'}
 								</Table.Cell>
@@ -303,17 +334,19 @@ export function Organization() {
 					<Table.Header>
 						<Table.Row>
 							<Table.Head scope="col">Author</Table.Head>
-							<Table.Head scope="col" className="text-right">PRs</Table.Head>
-							<Table.Head scope="col" className="text-right">Merged</Table.Head>
+							<Table.Head scope="col" className="text-right">
+								PRs
+							</Table.Head>
+							<Table.Head scope="col" className="text-right">
+								Merged
+							</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
 						{prStats.map((stat) => (
 							<Table.Row key={stat.author}>
 								<Table.Cell className="font-medium">{stat.author}</Table.Cell>
-								<Table.Cell className="text-right text-[var(--accent)]">
-									{stat.count}
-								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--accent)]">{stat.count}</Table.Cell>
 								<Table.Cell className="text-right text-[var(--color-success)]">
 									{stat.merged}
 								</Table.Cell>
@@ -322,12 +355,8 @@ export function Organization() {
 						{hasOther && (
 							<Table.Row>
 								<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
-								<Table.Cell className="text-right text-[var(--muted)]">
-									{otherPRs}
-								</Table.Cell>
-								<Table.Cell className="text-right text-[var(--muted)]">
-									—
-								</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">{otherPRs}</Table.Cell>
+								<Table.Cell className="text-right text-[var(--muted)]">—</Table.Cell>
 							</Table.Row>
 						)}
 					</Table.Body>
@@ -345,17 +374,19 @@ export function Organization() {
 				<Table.Header>
 					<Table.Row>
 						<Table.Head scope="col">Author</Table.Head>
-						<Table.Head scope="col" className="text-right">Opened</Table.Head>
-						<Table.Head scope="col" className="text-right">Closed</Table.Head>
+						<Table.Head scope="col" className="text-right">
+							Opened
+						</Table.Head>
+						<Table.Head scope="col" className="text-right">
+							Closed
+						</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
 					{issueStats.map((stat) => (
 						<Table.Row key={stat.author}>
 							<Table.Cell className="font-medium">{stat.author}</Table.Cell>
-							<Table.Cell className="text-right text-[var(--accent)]">
-								{stat.opened}
-							</Table.Cell>
+							<Table.Cell className="text-right text-[var(--accent)]">{stat.opened}</Table.Cell>
 							<Table.Cell className="text-right text-[var(--color-success)]">
 								{stat.closed}
 							</Table.Cell>
@@ -364,12 +395,8 @@ export function Organization() {
 					{hasOther && (
 						<Table.Row>
 							<Table.Cell className="font-medium text-[var(--muted)] italic">Other</Table.Cell>
-							<Table.Cell className="text-right text-[var(--muted)]">
-								{otherIssues}
-							</Table.Cell>
-							<Table.Cell className="text-right text-[var(--muted)]">
-								—
-							</Table.Cell>
+							<Table.Cell className="text-right text-[var(--muted)]">{otherIssues}</Table.Cell>
+							<Table.Cell className="text-right text-[var(--muted)]">—</Table.Cell>
 						</Table.Row>
 					)}
 				</Table.Body>
@@ -380,7 +407,10 @@ export function Organization() {
 	const handleUpgrade = () => navigate('/settings')
 
 	return (
-		<div className="h-full flex flex-col relative overflow-hidden" role="region" aria-label={`Organization: ${orgName}`}>
+		<section
+			className="h-full flex flex-col relative overflow-hidden"
+			aria-label={`Organization: ${orgName}`}
+		>
 			{/* Coordinated loading skeleton */}
 			<OrganizationSkeleton isVisible={isPrimaryLoading} />
 
@@ -393,275 +423,311 @@ export function Organization() {
 						transition={{ duration: 0.3, ease: 'easeOut' }}
 						className="h-full flex flex-col p-8 overflow-auto"
 					>
-			{/* Header */}
-			<div className="mb-8 flex items-start justify-between">
-				<div>
-					<button
-						onClick={() => navigate('/dashboard')}
-						className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors mb-1 flex items-center gap-1"
-					>
-						<span>←</span> back
-					</button>
-					<h1 className="text-2xl font-semibold text-[var(--foreground)] flex items-center gap-2">
-						{orgName}
-						{isLoading.info ? (
-							<Spinner size="sm" />
-						) : info ? (
-							<Badge variant="success">Connected</Badge>
-						) : error ? (
-							<Badge variant="error">Error</Badge>
-						) : null}
-					</h1>
-					{info?.description && (
-						<p className="text-sm text-[var(--muted)] mt-1">{info.description}</p>
-					)}
-					{isUsingCachedData && cacheAge && (
-						<p className="text-xs text-[var(--color-warning)] mt-1 flex items-center gap-1">
-							<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-							</svg>
-							Showing cached data from {cacheAge}
-						</p>
-					)}
-				</div>
-				<div className="flex items-center gap-3">
-					<div className="relative">
-						<Select
-							value={timeframe}
-							onChange={(v) => setTimeframe(v as Timeframe)}
-							options={timeframeOptions}
-							size="sm"
-						/>
-						{!isPro && (
-							<button
-								type="button"
-								onClick={handleUpgrade}
-								className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[var(--accent)] text-white"
-								aria-label="Pro features available"
-							>
-								<svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-								</svg>
-							</button>
-						)}
-					</div>
-					<Select
-						value={metricType}
-						onChange={(v) => setMetricType(v as MetricType)}
-						options={metricOptions}
-						size="sm"
-					/>
-					<ProGate
-						isPro={canExport}
-						feature="data export"
-						onUpgrade={handleUpgrade}
-						mode="disable"
-					>
-						<div className="relative">
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={() => setShowExportMenu(!showExportMenu)}
-								disabled={isExporting}
-							>
-								{isExporting ? <Spinner size="sm" /> : 'Export'}
-							</Button>
-							{showExportMenu && (
-								<div className="absolute right-0 top-full mt-1 py-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg z-10 min-w-[120px]">
-									<button
-										className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
-										onClick={() => handleExport('csv')}
-									>
-										Export CSV
-									</button>
-									<button
-										className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
-										onClick={() => handleExport('json')}
-									>
-										Export JSON
-									</button>
-								</div>
-							)}
-						</div>
-					</ProGate>
-				</div>
-			</div>
-
-			{/* Error state */}
-			{error && (
-				<Card className="mb-6 border-[var(--color-error)]">
-					<Card.Content>
-						<p className="text-[var(--color-error)] text-sm">{error}</p>
-						{!notFound && (
-							<Button variant="secondary" size="sm" className="mt-2" onClick={fetchAll}>
-								Retry
-							</Button>
-						)}
-					</Card.Content>
-				</Card>
-			)}
-
-			{/* Suggestions when org not found */}
-			{notFound && suggestions.length > 0 && (
-				<Card className="mb-6">
-					<Card.Header>
-						<h2 className="text-lg font-medium">Did you mean?</h2>
-					</Card.Header>
-					<Card.Content>
-						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-							{suggestions.map((org) => (
+						{/* Header */}
+						<div className="mb-8 flex items-start justify-between">
+							<div>
 								<button
-									key={org.login}
-									onClick={() => navigate(`/org/${org.login}`)}
-									className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card-hover)] transition-all text-left"
+									type="button"
+									onClick={() => navigate('/dashboard')}
+									className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors mb-1 flex items-center gap-1"
 								>
-									<img
-										src={org.avatar_url}
-										alt={org.login}
-										loading="lazy"
-										className="w-10 h-10 rounded-lg"
+									<span>←</span> back
+								</button>
+								<h1 className="text-2xl font-semibold text-[var(--foreground)] flex items-center gap-2">
+									{orgName}
+									{isLoading.overview ? (
+										<Spinner size="sm" />
+									) : overview ? (
+										<Badge variant="success">Connected</Badge>
+									) : error ? (
+										<Badge variant="error">Error</Badge>
+									) : null}
+								</h1>
+								{overview?.description && (
+									<p className="text-sm text-[var(--muted)] mt-1">{overview.description}</p>
+								)}
+								{isUsingCachedData && cacheAge && (
+									<p className="text-xs text-[var(--color-warning)] mt-1 flex items-center gap-1">
+										<svg
+											aria-hidden="true"
+											className="w-3 h-3"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+										Showing cached data from {cacheAge}
+									</p>
+								)}
+							</div>
+							<div className="flex items-center gap-3">
+								<div className="relative">
+									<Select
+										value={timeframe}
+										onChange={(v) => setTimeframe(v as Timeframe)}
+										options={timeframeOptions}
+										size="sm"
 									/>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">{org.login}</p>
-										{org.description && (
-											<p className="text-xs text-[var(--muted)] truncate">{org.description}</p>
+									{!isPro && (
+										<button
+											type="button"
+											onClick={handleUpgrade}
+											className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[var(--accent)] text-white"
+											aria-label="Pro features available"
+										>
+											<svg
+												aria-hidden="true"
+												className="w-2.5 h-2.5"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+												/>
+											</svg>
+										</button>
+									)}
+								</div>
+								<Select
+									value={metricType}
+									onChange={(v) => setMetricType(v as MetricType)}
+									options={metricOptions}
+									size="sm"
+								/>
+								<ProGate
+									isPro={canExport}
+									feature="data export"
+									onUpgrade={handleUpgrade}
+									mode="disable"
+								>
+									<div className="relative">
+										<Button
+											variant="secondary"
+											size="sm"
+											onClick={() => setShowExportMenu(!showExportMenu)}
+											disabled={isExporting}
+										>
+											{isExporting ? <Spinner size="sm" /> : 'Export'}
+										</Button>
+										{showExportMenu && (
+											<div className="absolute right-0 top-full mt-1 py-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg z-10 min-w-[120px]">
+												<button
+													type="button"
+													className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
+													onClick={() => handleExport('csv')}
+												>
+													Export CSV
+												</button>
+												<button
+													type="button"
+													className="w-full px-3 py-1.5 text-sm text-left hover:bg-[var(--card-hover)] transition-colors"
+													onClick={() => handleExport('json')}
+												>
+													Export JSON
+												</button>
+											</div>
 										)}
 									</div>
-								</button>
-							))}
-						</div>
-					</Card.Content>
-				</Card>
-			)}
-
-			{/* Stats grid */}
-			<div
-				className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
-				role="region"
-				aria-label="Primary statistics"
-				aria-live="polite"
-			>
-				<Stat
-					label="Total Commits"
-					value={isLoading.commits ? '...' : totalCommits || '—'}
-					description={getTimeframeLabel(timeframe)}
-				/>
-				<Stat
-					label="Pull Requests"
-					value={isLoading.prs ? '...' : totalPRs || '—'}
-					description={getTimeframeLabel(timeframe)}
-				/>
-				<Stat
-					label="Issues"
-					value={isLoading.issues ? '...' : totalIssues || '—'}
-					description={getTimeframeLabel(timeframe)}
-				/>
-				<Stat
-					label="Repositories"
-					value={isLoading.repos ? '...' : repos.length || info?.public_repos || '—'}
-					description="Total repos"
-				/>
-			</div>
-
-			{/* Secondary stats */}
-			<div
-				className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
-				role="region"
-				aria-label="Secondary statistics"
-			>
-				<Stat
-					label="Members"
-					value={isLoading.members ? '...' : members.length || '—'}
-					description="Organization members"
-				/>
-				<Stat
-					label="Teams"
-					value={isLoading.teams ? '...' : teams.length || '—'}
-					description="Active teams"
-				/>
-				<Stat
-					label="Contributors"
-					value={isLoading.commits ? '...' : commitStats.length || '—'}
-					description="Active contributors"
-				/>
-				<Stat
-					label="Avg Commits/Person"
-					value={
-						isLoading.commits
-							? '...'
-							: commitStats.length > 0
-								? Math.round(totalCommits / commitStats.length)
-								: '—'
-					}
-					description={getTimeframeLabel(timeframe)}
-				/>
-			</div>
-
-			{/* Content grid */}
-			<div className="grid lg:grid-cols-2 gap-8 flex-1">
-				{/* Top contributors based on selected metric */}
-				<Card className="flex flex-col">
-					<Card.Header>
-						<div className="flex items-center justify-between">
-							<h2 className="text-lg font-medium">
-								Top Contributors ({metricType === 'commits' ? 'Commits' : metricType === 'prs' ? 'PRs' : 'Issues'})
-							</h2>
-							{(isLoading.commits || isLoading.prs || isLoading.issues) && <Spinner size="sm" />}
-						</div>
-					</Card.Header>
-					<Card.Content className="flex-1 p-0">
-						{renderContributorTable()}
-					</Card.Content>
-				</Card>
-
-				{/* Teams */}
-				<Card className="flex flex-col">
-					<Card.Header>
-						<div className="flex items-center justify-between">
-							<h2 className="text-lg font-medium">Teams</h2>
-							{isLoading.teams && <Spinner size="sm" />}
-						</div>
-					</Card.Header>
-					<Card.Content className="flex-1 p-0">
-						{isLoading.teams && teams.length === 0 ? (
-							<div className="flex items-center justify-center h-32">
-								<Spinner />
+								</ProGate>
 							</div>
-						) : teams.length === 0 ? (
-							<div className="flex items-center justify-center h-32 text-[var(--muted)] text-sm">
-								No teams found
-							</div>
-						) : (
-							<Table aria-label="Organization teams">
-								<Table.Header>
-									<Table.Row>
-										<Table.Head scope="col">Team</Table.Head>
-										<Table.Head scope="col">Privacy</Table.Head>
-										<Table.Head scope="col" className="text-right">Members</Table.Head>
-									</Table.Row>
-								</Table.Header>
-								<Table.Body>
-									{teams.slice(0, 5).map((team) => (
-										<Table.Row key={team.id}>
-											<Table.Cell className="font-medium">{team.name}</Table.Cell>
-											<Table.Cell>
-												<Badge variant={team.privacy === 'secret' ? 'warning' : 'success'}>
-													{team.privacy}
-												</Badge>
-											</Table.Cell>
-											<Table.Cell className="text-right">{team.members_count}</Table.Cell>
-										</Table.Row>
-									))}
-								</Table.Body>
-							</Table>
+						</div>
+
+						{/* Error state */}
+						{error && (
+							<Card className="mb-6 border-[var(--color-error)]">
+								<Card.Content>
+									<p className="text-[var(--color-error)] text-sm">{error}</p>
+									{!notFound && (
+										<Button
+											variant="secondary"
+											size="sm"
+											className="mt-2"
+											onClick={() => fetchAll()}
+										>
+											Retry
+										</Button>
+									)}
+								</Card.Content>
+							</Card>
 						)}
-					</Card.Content>
-				</Card>
-			</div>
 
+						{/* Suggestions when org not found */}
+						{notFound && suggestions.length > 0 && (
+							<Card className="mb-6">
+								<Card.Header>
+									<h2 className="text-lg font-medium">Did you mean?</h2>
+								</Card.Header>
+								<Card.Content>
+									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+										{suggestions.map((org) => (
+											<button
+												type="button"
+												key={org.login}
+												onClick={() => navigate(`/org/${org.login}`)}
+												className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--card-hover)] transition-all text-left"
+											>
+												<img
+													src={org.avatarUrl}
+													alt={org.login}
+													loading="lazy"
+													className="w-10 h-10 rounded-lg"
+												/>
+												<div className="flex-1 min-w-0">
+													<p className="text-sm font-medium truncate">{org.login}</p>
+												</div>
+											</button>
+										))}
+									</div>
+								</Card.Content>
+							</Card>
+						)}
+
+						{/* Stats grid */}
+						<section
+							className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
+							aria-label="Primary statistics"
+							aria-live="polite"
+						>
+							<Stat
+								label="Total Commits"
+								value={isLoading.commits ? '...' : totalCommits || '—'}
+								description={getTimeframeLabel(timeframe)}
+							/>
+							<Stat
+								label="Pull Requests"
+								value={isLoading.prs ? '...' : totalPRs || '—'}
+								description={getTimeframeLabel(timeframe)}
+							/>
+							<Stat
+								label="Issues"
+								value={isLoading.issues ? '...' : totalIssues || '—'}
+								description={getTimeframeLabel(timeframe)}
+							/>
+							<Stat
+								label="Repositories"
+								value={isLoading.overview ? '...' : overview?.repositoryCount || '—'}
+								description="Total repos"
+							/>
+						</section>
+
+						{/* Secondary stats */}
+						<section
+							className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
+							aria-label="Secondary statistics"
+						>
+							<Stat
+								label="Members"
+								value={isLoading.overview ? '...' : overview?.memberCount || '—'}
+								description="Organization members"
+							/>
+							<Stat
+								label="Teams"
+								value={isLoading.overview ? '...' : teams.length || '—'}
+								description="Active teams"
+							/>
+							<Stat
+								label="Contributors"
+								value={isLoading.commits ? '...' : contributorCount || '—'}
+								description="Active contributors"
+							/>
+							<Stat
+								label="Avg Commits/Person"
+								value={
+									isLoading.commits
+										? '...'
+										: contributorCount > 0
+											? Math.round((commits?.attributed ?? 0) / contributorCount)
+											: '—'
+								}
+								description={getTimeframeLabel(timeframe)}
+							/>
+						</section>
+
+						{/* Content grid */}
+						<div className="grid lg:grid-cols-2 gap-8 flex-1">
+							{/* Top contributors based on selected metric */}
+							<Card className="flex flex-col">
+								<Card.Header>
+									<div className="flex items-center justify-between">
+										<h2 className="text-lg font-medium">
+											Top Contributors (
+											{metricType === 'commits'
+												? 'Commits'
+												: metricType === 'prs'
+													? 'PRs'
+													: 'Issues'}
+											)
+										</h2>
+										{isActivityLoading && <Spinner size="sm" />}
+									</div>
+								</Card.Header>
+								<Card.Content className="flex-1 p-0">
+									{renderContributorTable()}
+									{truncationNote && (
+										<p className="px-4 py-2 text-xs text-[var(--muted)]">{truncationNote}</p>
+									)}
+								</Card.Content>
+							</Card>
+
+							{/* Teams */}
+							<Card className="flex flex-col">
+								<Card.Header>
+									<div className="flex items-center justify-between">
+										<h2 className="text-lg font-medium">Teams</h2>
+										{isLoading.overview && <Spinner size="sm" />}
+									</div>
+								</Card.Header>
+								<Card.Content className="flex-1 p-0">
+									{isLoading.overview && teams.length === 0 ? (
+										<div className="flex items-center justify-center h-32">
+											<Spinner />
+										</div>
+									) : teams.length === 0 ? (
+										<div className="flex items-center justify-center h-32 text-[var(--muted)] text-sm">
+											No teams found
+										</div>
+									) : (
+										<Table aria-label="Organization teams">
+											<Table.Header>
+												<Table.Row>
+													<Table.Head scope="col">Team</Table.Head>
+													<Table.Head scope="col">Privacy</Table.Head>
+													<Table.Head scope="col" className="text-right">
+														Members
+													</Table.Head>
+												</Table.Row>
+											</Table.Header>
+											<Table.Body>
+												{teams.slice(0, 5).map((team) => (
+													<Table.Row key={team.id}>
+														<Table.Cell className="font-medium">{team.name}</Table.Cell>
+														<Table.Cell>
+															<Badge variant={team.privacy === 'SECRET' ? 'warning' : 'success'}>
+																{team.privacy === 'SECRET' ? 'secret' : 'visible'}
+															</Badge>
+														</Table.Cell>
+														<Table.Cell className="text-right">{team.memberCount}</Table.Cell>
+													</Table.Row>
+												))}
+											</Table.Body>
+										</Table>
+									)}
+								</Card.Content>
+							</Card>
+						</div>
 					</motion.div>
 				)}
 			</AnimatePresence>
-		</div>
+		</section>
 	)
 }

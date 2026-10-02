@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'motion/react'
-import { Skeleton, Card } from '@specto/ui'
+import { Card, Skeleton } from '@specto/ui'
+import { AnimatePresence, motion } from 'motion/react'
 
 interface OrganizationSkeletonProps {
 	isVisible: boolean
@@ -39,6 +39,7 @@ export function OrganizationSkeleton({ isVisible }: OrganizationSkeletonProps) {
 					{/* Primary stats grid skeleton */}
 					<div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 						{Array.from({ length: 4 }).map((_, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
 							<StatSkeleton key={`primary-${i}`} />
 						))}
 					</div>
@@ -46,6 +47,7 @@ export function OrganizationSkeleton({ isVisible }: OrganizationSkeletonProps) {
 					{/* Secondary stats grid skeleton */}
 					<div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 						{Array.from({ length: 4 }).map((_, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
 							<StatSkeleton key={`secondary-${i}`} />
 						))}
 					</div>
@@ -105,16 +107,33 @@ function TableSkeleton({ rows, columns }: TableSkeletonProps) {
 			{/* Header */}
 			<div className="flex items-center px-4 py-3 border-b border-[var(--border)]">
 				{Array.from({ length: columns }).map((_, i) => (
-					<div key={`header-${i}`} className={i === 0 ? 'flex-1' : 'w-20 text-right'}>
-						<Skeleton variant="text" width={i === 0 ? 60 : 40} height={12} className={i !== 0 ? 'ml-auto' : ''} />
+					<div
+						// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
+						key={`header-${i}`}
+						className={i === 0 ? 'flex-1' : 'w-20 text-right'}
+					>
+						<Skeleton
+							variant="text"
+							width={i === 0 ? 60 : 40}
+							height={12}
+							className={i !== 0 ? 'ml-auto' : ''}
+						/>
 					</div>
 				))}
 			</div>
 			{/* Rows */}
 			{Array.from({ length: rows }).map((_, rowIndex) => (
-				<div key={`row-${rowIndex}`} className="flex items-center px-4 py-3 border-b border-[var(--border)] last:border-b-0">
+				<div
+					// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
+					key={`row-${rowIndex}`}
+					className="flex items-center px-4 py-3 border-b border-[var(--border)] last:border-b-0"
+				>
 					{Array.from({ length: columns }).map((_, colIndex) => (
-						<div key={`cell-${rowIndex}-${colIndex}`} className={colIndex === 0 ? 'flex-1' : 'w-20 text-right'}>
+						<div
+							// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
+							key={`cell-${rowIndex}-${colIndex}`}
+							className={colIndex === 0 ? 'flex-1' : 'w-20 text-right'}
+						>
 							<Skeleton
 								variant="text"
 								width={colIndex === 0 ? 100 + Math.random() * 40 : 30 + Math.random() * 20}

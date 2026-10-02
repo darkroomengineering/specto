@@ -1,41 +1,31 @@
 {
-  "name": "@specto/core",
-  "version": "1.0.0",
-  "description": "Shared types and GitHub client for Specto",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./browser": {
-      "import": "./dist/browser.js",
-      "types": "./dist/browser.d.ts"
-    },
-    "./github": {
-      "import": "./dist/github/index.js",
-      "types": "./dist/github/index.d.ts"
-    },
-    "./cache": {
-      "import": "./dist/cache/index.js",
-      "types": "./dist/cache/index.d.ts"
-    },
-    "./utils": {
-      "import": "./dist/utils/index.js",
-      "types": "./dist/utils/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
-  },
-  "devDependencies": {
-    "@types/node": "^25.0.8"
-  },
-  "author": "Specto",
-  "license": "MIT"
+	"name": "@specto/core",
+	"version": "1.0.0",
+	"description": "Shared types and GitHub client for Specto",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./node": {
+			"types": "./dist/node.d.ts",
+			"import": "./dist/node.js"
+		}
+	},
+	"scripts": {
+		"build": "rm -rf dist && tsc",
+		"dev": "tsc --watch",
+		"typecheck": "tsc --noEmit",
+		"clean": "rm -rf dist",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@types/node": "^25.9.9",
+		"@types/bun": "^1.4.2"
+	},
+	"author": "Specto",
+	"license": "MIT"
 }

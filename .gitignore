@@ -38,8 +38,6 @@ coverage/
 # TLDR index
 .tldr/
 
-# Bun
-bun.lock
 .claude/
 .tool-versions
 .vercel

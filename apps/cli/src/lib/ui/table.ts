@@ -1,5 +1,6 @@
-import pc from 'picocolors'
+import { stripVTControlCharacters } from 'node:util'
 import type { OutputFormat } from '@specto/core'
+import pc from 'picocolors'
 
 interface TableColumn<T> {
 	key: keyof T | ((row: T) => string | number)
@@ -21,8 +22,12 @@ function getValue<T>(row: T, column: TableColumn<T>): string {
 	return String(value ?? '')
 }
 
-function padString(str: string, width: number, align: 'left' | 'right' | 'center' = 'left'): string {
-	const stripped = stripAnsi(str)
+function padString(
+	str: string,
+	width: number,
+	align: 'left' | 'right' | 'center' = 'left'
+): string {
+	const stripped = stripVTControlCharacters(str)
 	const padding = Math.max(0, width - stripped.length)
 
 	if (align === 'right') {
@@ -34,10 +39,6 @@ function padString(str: string, width: number, align: 'left' | 'right' | 'center
 		return ' '.repeat(leftPad) + str + ' '.repeat(rightPad)
 	}
 	return str + ' '.repeat(padding)
-}
-
-function stripAnsi(str: string): string {
-	return str.replace(/\x1b\[[0-9;]*m/g, '')
 }
 
 export function renderTable<T>(options: TableOptions<T>): string {
@@ -56,7 +57,10 @@ export function renderTable<T>(options: TableOptions<T>): string {
 	// Calculate column widths
 	const widths = columns.map((col) => {
 		const headerWidth = col.header.length
-		const maxValueWidth = Math.max(...rows.map((row) => stripAnsi(getValue(row, col)).length), 0)
+		const maxValueWidth = Math.max(
+			...rows.map((row) => stripVTControlCharacters(getValue(row, col)).length),
+			0
+		)
 		return col.width ?? Math.max(headerWidth, maxValueWidth)
 	})
 
@@ -71,7 +75,9 @@ export function renderTable<T>(options: TableOptions<T>): string {
 
 	// Header
 	const headerRow = columns
-		.map((col, i) => pc.bold(pc.cyan(padString(col.header, widths[i] ?? col.header.length, col.align))))
+		.map((col, i) =>
+			pc.bold(pc.cyan(padString(col.header, widths[i] ?? col.header.length, col.align)))
+		)
 		.join('  ')
 	lines.push(headerRow)
 
@@ -97,7 +103,9 @@ export function printTable<T>(options: TableOptions<T>): void {
 	console.log(renderTable(options))
 }
 
-export function printKeyValue(items: Array<{ key: string; value: string | number | boolean | null }>): void {
+export function printKeyValue(
+	items: Array<{ key: string; value: string | number | boolean | null }>
+): void {
 	const maxKeyLength = Math.max(...items.map((item) => item.key.length))
 
 	for (const { key, value } of items) {

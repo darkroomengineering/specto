@@ -1,5 +1,6 @@
+import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
-import { getOrganization, type OutputFormat } from '@specto/core'
+import { github } from '../../lib/github'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printKeyValue, printSection } from '../../lib/ui/table'
 
@@ -11,9 +12,13 @@ interface OrgInfoOptions {
 export async function runOrgInfo(options: OrgInfoOptions): Promise<void> {
 	const { org, output } = options
 
-	const orgData = await withSpinner(`Fetching organization info...`, () => getOrganization(org), {
-		successText: 'Organization info fetched',
-	})
+	const orgData = await withSpinner(
+		`Fetching organization info...`,
+		async () => (await github()).getOrganization(org),
+		{
+			successText: 'Organization info fetched',
+		}
+	)
 
 	if (output === 'json') {
 		console.log(JSON.stringify(orgData, null, 2))

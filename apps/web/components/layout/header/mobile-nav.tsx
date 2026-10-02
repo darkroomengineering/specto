@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { Button } from '@specto/ui'
 import Link from 'next/link'
+import { useState } from 'react'
 import s from './header.module.css'
 
 interface NavItem {
@@ -38,20 +38,21 @@ export function MobileNav({ items }: MobileNavProps) {
 
 			{/* Mobile menu overlay */}
 			{isOpen && (
-				<div className={s.mobileMenuOverlay} onClick={closeMenu}>
-					<nav
-						className={s.mobileMenu}
-						onClick={(e) => e.stopPropagation()}
-					>
+				<div className={s.mobileMenuOverlay}>
+					<button
+						type="button"
+						aria-label="Close menu"
+						className={s.mobileMenuBackdrop}
+						onClick={closeMenu}
+					/>
+					<nav className={s.mobileMenu}>
 						{items.map((item) => (
 							<Link
 								key={item.href}
 								href={item.href}
 								className={s.mobileNavLink}
 								onClick={closeMenu}
-								{...(item.external
-									? { target: '_blank', rel: 'noopener noreferrer' }
-									: {})}
+								{...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
 							>
 								{item.label}
 							</Link>

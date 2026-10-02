@@ -15,9 +15,7 @@ function applyTheme(theme: Theme) {
 	const root = document.documentElement
 
 	if (theme === 'system') {
-		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-			? 'dark'
-			: 'light'
+		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 		root.setAttribute('data-theme', systemTheme)
 	} else {
 		root.setAttribute('data-theme', theme)
@@ -61,10 +59,7 @@ export function initializeTheme() {
 		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 		mediaQuery.addEventListener('change', (e) => {
 			if (useThemeStore.getState().theme === 'system') {
-				document.documentElement.setAttribute(
-					'data-theme',
-					e.matches ? 'dark' : 'light'
-				)
+				document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light')
 			}
 		})
 	}

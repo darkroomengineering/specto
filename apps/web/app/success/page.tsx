@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
 import { Button, Card } from '@specto/ui'
-import Link from 'next/link'
-import { motion } from 'motion/react'
 import confetti from 'canvas-confetti'
+import { motion } from 'motion/react'
+import Link from 'next/link'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function SuccessPage() {
 	const [copied, setCopied] = useState(false)
@@ -72,6 +72,7 @@ export default function SuccessPage() {
 					transition={{ type: 'spring', damping: 12, stiffness: 200 }}
 				>
 					<svg
+						aria-hidden="true"
 						className="w-10 h-10 text-green-500"
 						fill="none"
 						stroke="currentColor"
@@ -109,20 +110,43 @@ export default function SuccessPage() {
 							<div className="flex items-center justify-between mb-2">
 								<span className="text-sm font-medium text-[var(--muted)]">Your License Key</span>
 								<button
+									type="button"
 									onClick={handleCopyPlaceholder}
 									className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1"
 								>
 									{copied ? (
 										<>
-											<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+											<svg
+												aria-hidden="true"
+												className="w-3 h-3"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M5 13l4 4L19 7"
+												/>
 											</svg>
 											Check your email
 										</>
 									) : (
 										<>
-											<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+											<svg
+												aria-hidden="true"
+												className="w-3 h-3"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+												/>
 											</svg>
 											Copy from email
 										</>
@@ -148,8 +172,19 @@ export default function SuccessPage() {
 					<Card className="mb-6">
 						<Card.Header>
 							<h2 className="text-lg font-semibold flex items-center gap-2">
-								<svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+								<svg
+									aria-hidden="true"
+									className="w-5 h-5 text-[var(--accent)]"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M13 10V3L4 14h7v7l9-11h-7z"
+									/>
 								</svg>
 								Quick Start Guide
 							</h2>
@@ -188,7 +223,11 @@ export default function SuccessPage() {
 									<div className="flex-1 pt-1">
 										<p className="font-medium mb-1">Connect to GitHub</p>
 										<p className="text-sm text-[var(--muted)]">
-											Specto uses your local GitHub CLI auth. Run <code className="px-1.5 py-0.5 rounded bg-[var(--background)] border border-[var(--border)] text-xs">gh auth login</code> if needed
+											Specto uses your local GitHub CLI auth. Run{' '}
+											<code className="px-1.5 py-0.5 rounded bg-[var(--background)] border border-[var(--border)] text-xs">
+												gh auth login
+											</code>{' '}
+											if needed
 										</p>
 									</div>
 								</li>
@@ -206,18 +245,33 @@ export default function SuccessPage() {
 					<Card className="mb-8 border-[var(--accent)]">
 						<Card.Content className="py-5">
 							<h3 className="font-medium mb-3 flex items-center gap-2">
-								<span className="px-2 py-0.5 rounded text-xs font-semibold bg-[var(--accent)] text-white">PRO</span>
+								<span className="px-2 py-0.5 rounded text-xs font-semibold bg-[var(--accent)] text-white">
+									PRO
+								</span>
 								Features Unlocked
 							</h3>
 							<ul className="grid grid-cols-2 gap-2 text-sm text-[var(--muted)]">
-								{['Unlimited history', 'Unlimited orgs', 'Export reports', 'API access'].map((feature) => (
-									<li key={feature} className="flex items-center gap-2">
-										<svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-										</svg>
-										{feature}
-									</li>
-								))}
+								{['Unlimited history', 'Unlimited orgs', 'Export reports', 'API access'].map(
+									(feature) => (
+										<li key={feature} className="flex items-center gap-2">
+											<svg
+												aria-hidden="true"
+												className="w-4 h-4 text-green-500"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+											{feature}
+										</li>
+									)
+								)}
 							</ul>
 						</Card.Content>
 					</Card>
@@ -233,21 +287,26 @@ export default function SuccessPage() {
 					<Link href="/downloads">
 						<Button className="w-full" size="lg">
 							<span className="flex items-center justify-center gap-2">
-								<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-									<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+								<svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+									<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
 								</svg>
 								Download Specto
 							</span>
 						</Button>
 					</Link>
 					<Link href="/">
-						<Button variant="secondary" className="w-full">Back to Home</Button>
+						<Button variant="secondary" className="w-full">
+							Back to Home
+						</Button>
 					</Link>
 				</motion.div>
 
 				<p className="text-xs text-[var(--muted)] mt-8 text-center">
 					Questions? Contact us at{' '}
-					<a href="mailto:hello@darkroom.engineering" className="text-[var(--accent)] hover:underline">
+					<a
+						href="mailto:hello@darkroom.engineering"
+						className="text-[var(--accent)] hover:underline"
+					>
 						hello@darkroom.engineering
 					</a>
 				</p>

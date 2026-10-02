@@ -1,57 +1,28 @@
 import { CustomerPortal } from '@polar-sh/nextjs'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import { polarServer, validateLicenseKey } from '@/lib/polar'
 
-const POLAR_ORG_ID = 'darkroomengineering'
+let handler: ReturnType<typeof CustomerPortal> | undefined
 
-// Validate license key and get associated customer ID
-async function validateLicenseAndGetCustomerId(licenseKey: string): Promise<string | null> {
-	try {
-		const response = await fetch(
-			'https://api.polar.sh/v1/customer-portal/license-keys/validate',
-			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					key: licenseKey,
-					organization_id: POLAR_ORG_ID,
-				}),
-			}
-		)
-
-		if (!response.ok) return null
-
-		const data = await response.json()
-		if (!data.valid) return null
-
-		// Extract customer ID from the license key validation response
-		return data.customer_id ?? null
-	} catch {
-		return null
+export async function GET(request: NextRequest) {
+	const accessToken = process.env.POLAR_ACCESS_TOKEN
+	if (!accessToken) {
+		console.error('Portal requires POLAR_ACCESS_TOKEN')
+		return NextResponse.json({ error: 'Portal is not configured' }, { status: 503 })
 	}
+
+	handler ??= CustomerPortal({
+		accessToken,
+		server: polarServer,
+		getCustomerId: async (req) => {
+			const licenseKey = new URL(req.url).searchParams.get('licenseKey')
+			if (!licenseKey) throw new Error('License key required for portal access')
+
+			const license = await validateLicenseKey(licenseKey)
+			if (!license.valid || !license.customerId) throw new Error('Invalid or expired license key')
+			return license.customerId
+		},
+	})
+	return handler(request)
 }
-
-export const GET = CustomerPortal({
-	accessToken: process.env.POLAR_ACCESS_TOKEN ?? '',
-	server: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
-	getCustomerId: async (req) => {
-		const accessToken = process.env.POLAR_ACCESS_TOKEN
-		if (!accessToken) {
-			throw new Error('Server configuration error')
-		}
-
-		const { searchParams } = new URL(req.url)
-		const licenseKey = searchParams.get('licenseKey')
-
-		if (!licenseKey) {
-			throw new Error('License key required for portal access')
-		}
-
-		// Validate license key and get the associated customer ID
-		const customerId = await validateLicenseAndGetCustomerId(licenseKey)
-
-		if (!customerId) {
-			throw new Error('Invalid or expired license key')
-		}
-
-		return customerId
-	},
-})

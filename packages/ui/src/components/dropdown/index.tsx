@@ -1,8 +1,8 @@
 'use client'
 
-import type { ReactNode, ComponentPropsWithoutRef } from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { forwardRef } from 'react'
 import { cn } from '../../utils/cn'
 
@@ -12,7 +12,8 @@ import { cn } from '../../utils/cn'
 
 const DropdownRoot = DropdownMenuPrimitive.Root
 
-export interface DropdownTriggerProps extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> {
+export interface DropdownTriggerProps
+	extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> {
 	children: ReactNode
 }
 
@@ -36,7 +37,8 @@ DropdownTrigger.displayName = 'DropdownTrigger'
 // Content
 // =============================================================================
 
-export interface DropdownContentProps extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> {
+export interface DropdownContentProps
+	extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> {
 	children: ReactNode
 }
 
@@ -73,7 +75,8 @@ DropdownContent.displayName = 'DropdownContent'
 // Item
 // =============================================================================
 
-export interface DropdownItemProps extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> {
+export interface DropdownItemProps
+	extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> {
 	children: ReactNode
 	destructive?: boolean
 }
@@ -87,7 +90,8 @@ const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
 				'transition-colors duration-[var(--duration-fast)]',
 				'focus:bg-[var(--card-hover)] focus:text-[var(--foreground)]',
 				'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-				destructive && 'text-[var(--color-error)] focus:bg-[var(--color-error)]/10 focus:text-[var(--color-error)]',
+				destructive &&
+					'text-[var(--color-error)] focus:bg-[var(--color-error)]/10 focus:text-[var(--color-error)]',
 				!destructive && 'text-[var(--foreground)]',
 				className
 			)}
@@ -103,7 +107,8 @@ DropdownItem.displayName = 'DropdownItem'
 // Label
 // =============================================================================
 
-export interface DropdownLabelProps extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> {
+export interface DropdownLabelProps
+	extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> {
 	children: ReactNode
 }
 
@@ -140,7 +145,8 @@ DropdownSeparator.displayName = 'DropdownSeparator'
 // Checkbox Item
 // =============================================================================
 
-export interface DropdownCheckboxItemProps extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem> {
+export interface DropdownCheckboxItemProps
+	extends ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem> {
 	children: ReactNode
 }
 
@@ -160,6 +166,7 @@ const DropdownCheckboxItem = forwardRef<HTMLDivElement, DropdownCheckboxItemProp
 			<span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
 					<svg
+						aria-hidden="true"
 						width="12"
 						height="12"
 						viewBox="0 0 12 12"
@@ -205,6 +212,7 @@ const DropdownSubTrigger = forwardRef<
 	>
 		{children}
 		<svg
+			aria-hidden="true"
 			className="ml-auto h-4 w-4"
 			fill="none"
 			viewBox="0 0 24 24"
@@ -255,13 +263,13 @@ export const Dropdown = Object.assign(DropdownRoot, {
 
 // Named exports for individual components
 export {
-	DropdownTrigger,
+	DropdownCheckboxItem,
 	DropdownContent,
 	DropdownItem,
 	DropdownLabel,
 	DropdownSeparator,
-	DropdownCheckboxItem,
 	DropdownSub,
-	DropdownSubTrigger,
 	DropdownSubContent,
+	DropdownSubTrigger,
+	DropdownTrigger,
 }

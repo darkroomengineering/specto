@@ -1,18 +1,29 @@
-import { useState, useEffect } from 'react'
-import { Card, Button, Badge, AlertDialog } from '@specto/ui'
-import { toast } from 'sonner'
+import { AlertDialog, Badge, Button, Card } from '@specto/ui'
 import { getVersion } from '@tauri-apps/api/app'
-import { useAuthStore } from '../stores/auth'
-import { useLicenseStore, useProFeature, FREE_LIMITS } from '../stores/license'
-import { useThemeStore, type Theme } from '../stores/theme'
-import { Spinner } from '../components/spinner'
 import { open } from '@tauri-apps/plugin-shell'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { Spinner } from '../components/spinner'
+import { useAuthStore } from '../stores/auth'
+import { FREE_LIMITS, useLicenseStore, useProFeature } from '../stores/license'
+import { useThemeStore } from '../stores/theme'
 
 const PRO_FEATURES = [
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+				/>
 			</svg>
 		),
 		title: 'Unlimited Organizations',
@@ -20,8 +31,19 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+				/>
 			</svg>
 		),
 		title: 'Unlimited History',
@@ -29,8 +51,19 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+				/>
 			</svg>
 		),
 		title: 'Export Reports',
@@ -38,8 +71,19 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+				/>
 			</svg>
 		),
 		title: 'Advanced Analytics',
@@ -47,8 +91,19 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+				/>
 			</svg>
 		),
 		title: 'Team Comparisons',
@@ -56,8 +111,19 @@ const PRO_FEATURES = [
 	},
 	{
 		icon: (
-			<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+			<svg
+				aria-hidden="true"
+				className="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={2}
+					d="M13 10V3L4 14h7v7l9-11h-7z"
+				/>
 			</svg>
 		),
 		title: 'API Access',
@@ -68,8 +134,6 @@ const PRO_FEATURES = [
 export function Settings() {
 	const { isAuthenticated, isLoading, username, error, checkAuth } = useAuthStore()
 	const {
-		licenseKey,
-		isPro: licenseIsPro,
 		isValidating,
 		error: licenseError,
 		activatedAt,
@@ -126,9 +190,7 @@ export function Settings() {
 								<div className="flex items-center justify-between py-2 border-b border-[var(--border)]">
 									<div>
 										<p className="text-sm font-medium">Status</p>
-										<p className="text-xs text-[var(--muted)]">
-											GitHub CLI authentication
-										</p>
+										<p className="text-xs text-[var(--muted)]">GitHub CLI authentication</p>
 									</div>
 									<span className="text-sm">
 										{isLoading ? (
@@ -145,9 +207,7 @@ export function Settings() {
 									<div className="flex items-center justify-between py-2 border-b border-[var(--border)]">
 										<div>
 											<p className="text-sm font-medium">Username</p>
-											<p className="text-xs text-[var(--muted)]">
-												Logged in as
-											</p>
+											<p className="text-xs text-[var(--muted)]">Logged in as</p>
 										</div>
 										<span className="text-sm text-[var(--accent)]">{username}</span>
 									</div>
@@ -173,7 +233,9 @@ export function Settings() {
 						</Card.Content>
 						<Card.Footer>
 							<p className="text-xs text-[var(--muted)]">
-								Run <code className="px-1.5 py-0.5 rounded bg-[var(--card-hover)]">gh auth login</code> in your terminal to authenticate.
+								Run{' '}
+								<code className="px-1.5 py-0.5 rounded bg-[var(--card-hover)]">gh auth login</code>{' '}
+								in your terminal to authenticate.
 							</p>
 						</Card.Footer>
 					</Card>
@@ -187,9 +249,7 @@ export function Settings() {
 							<div className="flex items-center justify-between">
 								<div>
 									<p className="text-sm font-medium">Theme</p>
-									<p className="text-xs text-[var(--muted)]">
-										Choose your preferred color scheme
-									</p>
+									<p className="text-xs text-[var(--muted)]">Choose your preferred color scheme</p>
 								</div>
 								<div className="flex gap-2">
 									<Button
@@ -235,7 +295,7 @@ export function Settings() {
 										{isPro ? 'Pro' : 'Free'}
 									</span>
 								</div>
-									<div className="flex justify-between">
+								<div className="flex justify-between">
 									<span className="text-[var(--muted)]">Framework</span>
 									<span>Tauri + React</span>
 								</div>
@@ -263,8 +323,19 @@ export function Settings() {
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-3">
 									<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center">
-										<svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+										<svg
+											aria-hidden="true"
+											className="w-5 h-5 text-white"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+											/>
 										</svg>
 									</div>
 									<div>
@@ -274,11 +345,7 @@ export function Settings() {
 								</div>
 								<div className="flex items-center gap-2">
 									{isDev && <Badge>Dev Mode</Badge>}
-									{isPro ? (
-										<Badge variant="success">Active</Badge>
-									) : (
-										<Badge>Free Plan</Badge>
-									)}
+									{isPro ? <Badge variant="success">Active</Badge> : <Badge>Free Plan</Badge>}
 								</div>
 							</div>
 						</Card.Header>
@@ -287,10 +354,23 @@ export function Settings() {
 								<div className="space-y-4">
 									<div className="p-4 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20">
 										<div className="flex items-center gap-2 mb-3">
-											<svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+											<svg
+												aria-hidden="true"
+												className="w-5 h-5 text-[var(--accent)]"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+												/>
 											</svg>
-											<span className="font-medium text-[var(--accent)]">All Pro features unlocked!</span>
+											<span className="font-medium text-[var(--accent)]">
+												All Pro features unlocked!
+											</span>
 										</div>
 										<p className="text-sm text-[var(--muted)]">
 											Thank you for supporting Specto. You have access to all premium features.
@@ -311,7 +391,9 @@ export function Settings() {
 											<AlertDialog.Header>
 												<AlertDialog.Title>Deactivate License?</AlertDialog.Title>
 												<AlertDialog.Description>
-													Are you sure you want to deactivate your Pro license? You will lose access to all Pro features and will need to re-enter your license key to reactivate.
+													Are you sure you want to deactivate your Pro license? You will lose access
+													to all Pro features and will need to re-enter your license key to
+													reactivate.
 												</AlertDialog.Description>
 											</AlertDialog.Header>
 											<AlertDialog.Footer>
@@ -319,11 +401,14 @@ export function Settings() {
 													<Button variant="secondary">Cancel</Button>
 												</AlertDialog.Cancel>
 												<AlertDialog.Action asChild>
-													<Button variant="danger" onClick={() => {
-														clearLicense()
-														setShowDeactivateDialog(false)
-														toast.success('License deactivated')
-													}}>
+													<Button
+														variant="danger"
+														onClick={() => {
+															clearLicense()
+															setShowDeactivateDialog(false)
+															toast.success('License deactivated')
+														}}
+													>
 														Deactivate
 													</Button>
 												</AlertDialog.Action>
@@ -341,11 +426,12 @@ export function Settings() {
 
 									{/* License key input */}
 									<div className="space-y-3">
-										<label className="block text-sm font-medium">
+										<label htmlFor="license-key" className="block text-sm font-medium">
 											Enter license key
 										</label>
 										<div className="flex gap-2">
 											<input
+												id="license-key"
 												type="text"
 												value={keyInput}
 												onChange={(e) => setKeyInput(e.target.value)}
@@ -364,7 +450,6 @@ export function Settings() {
 												{isValidating ? <Spinner size="sm" /> : 'Activate'}
 											</Button>
 										</div>
-
 									</div>
 
 									<Button
@@ -387,16 +472,18 @@ export function Settings() {
 						</Card.Header>
 						<Card.Content>
 							<div className="grid grid-cols-1 gap-4">
-								{PRO_FEATURES.map((feature, index) => (
+								{PRO_FEATURES.map((feature) => (
 									<div
-										key={index}
+										key={feature.title}
 										className={`flex gap-3 p-3 rounded-lg border transition-colors ${
 											isPro
 												? 'border-[var(--accent)]/20 bg-[var(--accent)]/5'
 												: 'border-[var(--border)] bg-[var(--card-hover)]'
 										}`}
 									>
-										<div className={`flex-shrink-0 ${isPro ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}`}>
+										<div
+											className={`flex-shrink-0 ${isPro ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}`}
+										>
 											{feature.icon}
 										</div>
 										<div>
@@ -404,8 +491,19 @@ export function Settings() {
 											<p className="text-xs text-[var(--muted)]">{feature.description}</p>
 										</div>
 										{isPro && (
-											<svg className="w-4 h-4 text-[var(--accent)] ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+											<svg
+												aria-hidden="true"
+												className="w-4 h-4 text-[var(--accent)] ml-auto flex-shrink-0"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M5 13l4 4L19 7"
+												/>
 											</svg>
 										)}
 									</div>

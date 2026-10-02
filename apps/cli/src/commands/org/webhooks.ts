@@ -1,5 +1,6 @@
+import type { OutputFormat } from '@specto/core'
 import pc from 'picocolors'
-import { getOrgWebhooks, type OutputFormat } from '@specto/core'
+import { github } from '../../lib/github'
 import { withSpinner } from '../../lib/ui/spinner'
 import { printTable } from '../../lib/ui/table'
 
@@ -11,9 +12,13 @@ interface WebhooksOptions {
 export async function runOrgWebhooks(options: WebhooksOptions): Promise<void> {
 	const { org, output } = options
 
-	const webhooks = await withSpinner(`Fetching webhooks...`, () => getOrgWebhooks(org), {
-		successText: 'Webhooks fetched',
-	})
+	const webhooks = await withSpinner(
+		`Fetching webhooks...`,
+		async () => (await github()).getOrgWebhooks(org),
+		{
+			successText: 'Webhooks fetched',
+		}
+	)
 
 	if (webhooks.length === 0) {
 		console.log(pc.yellow('No organization webhooks found'))

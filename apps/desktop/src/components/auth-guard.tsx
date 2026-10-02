@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef, type ReactNode } from 'react'
-import { useAuthStore } from '../stores/auth'
 import { Button, Card } from '@specto/ui'
-import { Loading } from './spinner'
 import { open } from '@tauri-apps/plugin-shell'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { useAuthStore } from '../stores/auth'
+import { Loading } from './spinner'
 
 // Auth timeout constants
 const AUTH_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
@@ -88,9 +88,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 						<p className="text-sm text-[var(--muted)] mb-4">
 							Specto uses the GitHub CLI for secure authentication.
 						</p>
-						{error && (
-							<p className="text-sm text-[var(--color-error)] mb-4">{error}</p>
-						)}
+						{error && <p className="text-sm text-[var(--color-error)] mb-4">{error}</p>}
 
 						{ghNotInstalled ? (
 							<div className="space-y-4">
@@ -98,9 +96,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 									GitHub CLI is required. Install it first, then click "Login with GitHub".
 								</p>
 								<div className="flex flex-col gap-2">
-									<Button onClick={() => open('https://cli.github.com')}>
-										Install GitHub CLI
-									</Button>
+									<Button onClick={() => open('https://cli.github.com')}>Install GitHub CLI</Button>
 									<Button variant="secondary" onClick={checkAuth}>
 										I've Installed It
 									</Button>

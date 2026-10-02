@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { Layout } from './components/layout'
 import { AuthGuard } from './components/auth-guard'
+import { Layout } from './components/layout'
 import { Updater } from './components/updater'
 import { Dashboard } from './pages/dashboard'
-import { Organization } from './pages/organization'
 import { Leaderboard } from './pages/leaderboard'
+import { Organization } from './pages/organization'
 import { Settings } from './pages/settings'
 
 export function App() {

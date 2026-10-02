@@ -1,5 +1,5 @@
+import { AuthError, GitHubError, RateLimitError } from '@specto/core'
 import pc from 'picocolors'
-import { GitHubError, RateLimitError, AuthError } from '@specto/core'
 
 export function formatError(error: unknown): string {
 	if (error instanceof AuthError) {

@@ -9,7 +9,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles = {
 	primary: 'bg-[var(--accent)] text-white hover:opacity-90',
-	secondary: 'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--card-hover)]',
+	secondary:
+		'bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--card-hover)]',
 	ghost: 'bg-transparent text-[var(--foreground)] hover:bg-[var(--card)]',
 	danger: 'bg-[var(--color-error)] text-white hover:opacity-90',
 }

@@ -2,8 +2,8 @@
  * Desktop app error boundary wrapper
  * Re-exports ErrorBoundary from @specto/ui with desktop-specific defaults
  */
-import { ErrorBoundary as UIErrorBoundary, type ErrorBoundaryProps } from '@specto/ui'
-import type { ReactNode, ErrorInfo } from 'react'
+import { ErrorBoundary as UIErrorBoundary } from '@specto/ui'
+import type { ErrorInfo, ReactNode } from 'react'
 
 interface DesktopErrorBoundaryProps {
 	children: ReactNode
