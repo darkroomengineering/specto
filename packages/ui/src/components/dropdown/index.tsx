@@ -166,6 +166,7 @@ const DropdownCheckboxItem = forwardRef<HTMLDivElement, DropdownCheckboxItemProp
 			<span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
 					<svg
+						aria-hidden="true"
 						width="12"
 						height="12"
 						viewBox="0 0 12 12"
@@ -211,6 +212,7 @@ const DropdownSubTrigger = forwardRef<
 	>
 		{children}
 		<svg
+			aria-hidden="true"
 			className="ml-auto h-4 w-4"
 			fill="none"
 			viewBox="0 0 24 24"

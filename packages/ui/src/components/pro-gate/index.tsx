@@ -63,16 +63,16 @@ export function ProGate({
 	// Disable mode - render with reduced opacity and no interaction
 	if (mode === 'disable') {
 		return (
-			<div
-				className={cn('relative cursor-not-allowed', className)}
-				onClick={(e) => {
-					e.preventDefault()
-					e.stopPropagation()
-					onUpgrade()
-				}}
-				{...props}
-			>
-				<div className="opacity-50 pointer-events-none select-none">{children}</div>
+			<div className={cn('relative', className)} {...props}>
+				<div className="opacity-50 pointer-events-none select-none" inert>
+					{children}
+				</div>
+				<button
+					type="button"
+					aria-label="Upgrade to Pro to use this feature"
+					className="absolute inset-0 cursor-not-allowed"
+					onClick={onUpgrade}
+				/>
 			</div>
 		)
 	}
@@ -126,7 +126,13 @@ export function ProBadge({ show, className, ...props }: ProBadgeProps) {
 
 function LockIcon({ className }: { className?: string }) {
 	return (
-		<svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<svg
+			aria-hidden="true"
+			className={className}
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

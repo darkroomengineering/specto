@@ -78,6 +78,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
 		}
 
 		return (
+			// biome-ignore lint/a11y/noLabelWithoutControl: the Radix Switch root rendered inside is the control
 			<label
 				className={cn(
 					'inline-flex items-center gap-2 cursor-pointer',
